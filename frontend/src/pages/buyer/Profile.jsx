@@ -128,7 +128,7 @@ const Profile = () => {
         ) : (
           <button
             onClick={() => setIsEditing(true)}
-            className="bg-blue-500 text-white px-4 py-2 rounded-lg w-full"
+            className="bg-green-600 text-white px-4 py-2 rounded-lg w-full hover:bg-green-700 transition"
           >
             Edit Profile
           </button>

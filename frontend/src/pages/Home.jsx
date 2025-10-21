@@ -1,4 +1,6 @@
 import { Link } from "react-router-dom";
+import Button from "../components/Button";
+import { motion } from "framer-motion";
 
 const Home = () => {
   return (
@@ -7,33 +9,32 @@ const Home = () => {
       style={{ backgroundImage: "url('/images/farm-bg.jpg')" }}
     >
       {/* Overlay */}
-      <div className="absolute inset-0 bg-black opacity-65"></div>
+      <div className="absolute inset-0 bg-black opacity-50"></div>
 
       {/* Content Container */}
-      <div className="relative z-10 text-center p-8 md:p-12 bg-white/80 opacity-70 backdrop-blur-md rounded-xl shadow-2xl max-w-2xl">
-        <h1 className="text-4xl md:text-5xl font-extrabold text-green-800 leading-tight">
-          Buy & Sell Farm Produce with Ease
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5 }}
+        className="relative z-10 text-center p-8 md:p-12 bg-white/90 backdrop-blur-sm rounded-xl shadow-2xl max-w-2xl"
+      >
+        <h1 className="text-4xl md:text-6xl font-extrabold text-gray-800 leading-tight">
+          Connecting Farmers and Buyers
         </h1>
-        <p className="text-lg md:text-xl text-gray-700 mt-4 font-medium">
-          A seamless online marketplace connecting farmers and buyers directly.
+        <p className="text-lg md:text-xl text-gray-600 mt-4 font-medium">
+          A modern marketplace for fresh, high-quality farm produce.
         </p>
 
         {/* Call-to-Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 mt-6">
-          <Link
-            to="/register"
-            className="px-6 py-3 text-lg font-semibold bg-green-600 text-white rounded-lg hover:bg-green-700 transition duration-300 shadow-md flex-1 text-center"
-          >
-            Get Started
+        <div className="flex flex-col sm:flex-row gap-4 mt-8">
+          <Link to="/register">
+            <Button className="w-full">Get Started</Button>
           </Link>
-          <Link
-            to="/about"
-            className="px-6 py-3 text-lg font-semibold bg-gray-100 text-green-800 border border-green-600 rounded-lg hover:bg-green-200 transition duration-300 shadow-md flex-1 text-center"
-          >
-            Learn More
+          <Link to="/about">
+            <Button className="w-full bg-gray-200 text-gray-800 hover:bg-gray-300">Learn More</Button>
           </Link>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };

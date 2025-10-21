@@ -4,6 +4,7 @@ import {
   Routes,
   useLocation,
 } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -18,6 +19,7 @@ import Marketplace from "./pages/buyer/Marketplace";
 import Cart from "./pages/buyer/Cart";
 import Orders from "./pages/buyer/Orders";
 import Profile from "./pages/buyer/Profile";
+import Wishlist from "./pages/buyer/Wishlist";
 import Payment from "./pages/buyer/Payment";
 
 // Farmer Pages
@@ -49,6 +51,32 @@ function ConditionalFooter() {
 function App() {
   return (
     <Router>
+      <Toaster
+        position="top-right"
+        reverseOrder={false}
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#fff',
+            color: '#374151',
+            padding: '16px',
+            borderRadius: '8px',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+          },
+          success: {
+            iconTheme: {
+              primary: '#10b981',
+              secondary: '#fff',
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#fff',
+            },
+          },
+        }}
+      />
       <div className="flex flex-col min-h-screen">
         <Navbar />
         <div className="flex-grow pt-16">
@@ -71,6 +99,7 @@ function App() {
                 <Route path="product/:id" element={<ProductDetails />} />
                 <Route path="checkout" element={<Checkout />} />
                 <Route path="payment" element={<Payment />} />
+                <Route path="wishlist" element={<Wishlist />} />
               </Route>
 
               {/* Farmer Routes */}

@@ -4,6 +4,8 @@ import Sidebar from "../components/Sidebar";
 import jsPDF from "jspdf";
 import domtoimage from "dom-to-image";
 import Papa from "papaparse";
+import Button from "../components/Button";
+import { motion } from "framer-motion";
 
 const Reports = () => {
   const [reportType, setReportType] = useState("sales");
@@ -105,73 +107,105 @@ const Reports = () => {
     document.body.removeChild(link);
   };
 
+  const SkeletonRow = () => (
+    <tr>
+      {getTableHeaders().map((_, i) => (
+        <td key={i} className="border p-2"><div className="h-4 bg-gray-200 rounded animate-pulse"></div></td>
+      ))}
+    </tr>
+  );
+
   return (
     <div className="flex">
       <Sidebar />
       <div className="p-6 w-full">
-        <h1 className="text-2xl font-bold mb-4">Reports & Analytics</h1>
-
-        <select
-          className="mt-4 p-2 border rounded"
-          value={reportType}
-          onChange={(e) => setReportType(e.target.value)}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
         >
-          <option value="sales">Sales Report</option>
-          <option value="users">Users Report</option>
-          <option value="products">Products Report</option>
-        </select>
+          <h1 className="text-2xl font-bold mb-4 text-violet-800">Reports & Analytics</h1>
 
-        <div
+          <select
+            className="mt-4 p-2 border rounded"
+            value={reportType}
+            onChange={(e) => setReportType(e.target.value)}
+          >
+            <option value="sales">Sales Report</option>
+            <option value="users">Users Report</option>
+            <option value="products">Products Report</option>
+          </select>
+        </motion.div>
+
+        <motion.div
           id="report-content"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
           className="mt-6 bg-white p-4 shadow rounded-lg"
         >
           <h2 className="text-xl font-semibold capitalize">
             {reportType} Report
           </h2>
 
-          {loading ? (
-            <p className="text-center">Loading data...</p>
-          ) : error ? (
-            <p className="text-red-500">{error}</p>
-          ) : (
-            <table className="w-full mt-4 border-collapse border border-gray-300">
-              <thead>
-                <tr className="bg-gray-100">
-                  {getTableHeaders().map((header, index) => (
-                    <th key={index} className="border p-2">
-                      {header}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {getReportData().map((item, index) => (
-                  <tr key={index} className="border">
-                    {Object.values(item).map((value, idx) => (
-                      <td key={idx} className="border p-2">
-                        {value || "N/A"}
-                      </td>
+          <div className="overflow-x-auto">
+            {loading ? (
+              <table className="w-full mt-4 border-collapse border border-gray-300">
+                <thead>
+                  <tr className="bg-gray-100">
+                    {getTableHeaders().map((header, index) => (
+                      <th key={index} className="border p-2">
+                        {header}
+                      </th>
                     ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
+                </thead>
+                <tbody>
+                  {[...Array(10)].map((_, i) => <SkeletonRow key={i} />)}
+                </tbody>
+              </table>
+            ) : error ? (
+              <p className="text-red-500">{error}</p>
+            ) : (
+              <table className="w-full mt-4 border-collapse border border-gray-300">
+                <thead>
+                  <tr className="bg-gray-100">
+                    {getTableHeaders().map((header, index) => (
+                      <th key={index} className="border p-2">
+                        {header}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {getReportData().map((item, index) => (
+                    <tr key={index} className="border">
+                      {Object.values(item).map((value, idx) => (
+                        <td key={idx} className="border p-2">
+                          {value || "N/A"}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </motion.div>
 
         <div className="mt-6 flex gap-4">
-          <button
+          <Button
             onClick={handleExportPDF}
-            className="bg-green-500 text-white px-4 py-2 rounded"
+            className="bg-green-500 hover:bg-green-600"
           >
             Export as PDF
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={handleExportCSV}
-            className="bg-yellow-500 text-white px-4 py-2 rounded"
+            className="bg-yellow-500 hover:bg-yellow-600"
           >
             Export as CSV
-          </button>
+          </Button>
         </div>
       </div>
     </div>

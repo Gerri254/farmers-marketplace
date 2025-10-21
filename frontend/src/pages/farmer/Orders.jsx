@@ -67,7 +67,7 @@ const Orders = () => {
                 <div className="flex items-center gap-4">
                   {order.product ? (
                     <img
-                      src={`http://localhost:3000/${order.product.productImage}`}
+                      src={`${import.meta.env.VITE_BACKEND_URL}/${order.product.productImage}`}
                       alt={order.product.name}
                       className="w-16 h-16 object-cover rounded"
                     />

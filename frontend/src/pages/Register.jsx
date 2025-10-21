@@ -1,6 +1,9 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { farmerRegister, buyerRegister } from "../api";
+import Button from "../components/Button";
+import Input from "../components/Input";
+import { motion } from "framer-motion";
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -100,9 +103,14 @@ const Register = () => {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-green-200 to-green-500">
-      <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
-        <h2 className="text-3xl font-bold text-center text-green-800 mb-6">
+    <div className="flex justify-center items-center min-h-screen bg-gray-100">
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md"
+      >
+        <h2 className="text-3xl font-bold text-center text-gray-800 mb-6">
           Create Account
         </h2>
         {error && (
@@ -110,45 +118,40 @@ const Register = () => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <input
+          <Input
             type="text"
             name="name"
             placeholder="Full Name"
             value={formData.name}
             onChange={handleChange}
-            className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500"
           />
-          <input
+          <Input
             type="email"
             name="email"
             placeholder="Email"
             value={formData.email}
             onChange={handleChange}
-            className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500"
           />
-          <input
+          <Input
             type="tel"
             name="phone"
             placeholder="Phone Number"
             value={formData.phone}
             onChange={handleChange}
-            className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500"
           />
-          <input
+          <Input
             type="password"
             name="password"
             placeholder="Password"
             value={formData.password}
             onChange={handleChange}
-            className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500"
           />
-          <input
+          <Input
             type="password"
             name="confirmPassword"
             placeholder="Confirm Password"
             value={formData.confirmPassword}
             onChange={handleChange}
-            className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500"
           />
 
           <select
@@ -162,48 +165,43 @@ const Register = () => {
           </select>
 
           {formData.role === "buyer" && (
-            <input
+            <Input
               type="text"
               name="address"
               placeholder="Address"
               value={formData.address}
               onChange={handleChange}
-              className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500"
             />
           )}
 
           {formData.role === "farmer" && (
-            <>
-              <input
+            <React.Fragment>
+              <Input
                 type="text"
                 name="farmName"
                 placeholder="Farm Name"
                 value={formData.farm.farmName}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500"
               />
-              <input
+              <Input
                 type="text"
                 name="location"
                 placeholder="Farm Location"
                 value={formData.farm.location}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500"
               />
-            </>
+            </React.Fragment>
           )}
 
-          <button
+          <Button
             type="submit"
-            className={`w-full py-3 rounded-lg text-lg font-semibold text-white ${
-              loading
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-green-600 hover:bg-green-700 transition duration-300"
+            className={`w-full ${
+              loading ? "bg-gray-400 cursor-not-allowed" : ""
             }`}
             disabled={loading}
           >
             {loading ? "Signing Up..." : "Sign Up"}
-          </button>
+          </Button>
         </form>
 
         <p className="text-sm mt-4 text-center">
@@ -215,7 +213,7 @@ const Register = () => {
             Login
           </a>
         </p>
-      </div>
+      </motion.div>
     </div>
   );
 };

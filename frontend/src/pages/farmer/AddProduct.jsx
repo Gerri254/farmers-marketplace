@@ -1,6 +1,10 @@
 import React, { useState } from "react";
+import { motion } from "framer-motion";
+import toast from "react-hot-toast";
 import { addProduct } from "../../api";
 import Cookies from "js-cookie";
+import Button from "../../components/Button";
+import Input from "../../components/Input";
 
 const AddProduct = () => {
   const [product, setProduct] = useState({
@@ -39,7 +43,7 @@ const AddProduct = () => {
     // Fetch farmerId from cookies
     const farmerId = Cookies.get("id");
     if (!farmerId) {
-      alert("Farmer ID not found. Please log in again.");
+      toast.error("Farmer ID not found. Please log in again.");
       return;
     }
 
@@ -49,9 +53,10 @@ const AddProduct = () => {
       formData.append(key, value);
     });
 
+    const loadingToast = toast.loading("Adding product...");
     try {
       await addProduct(formData);
-      alert("Product added successfully!");
+      toast.success("Product added successfully!", { id: loadingToast });
       setProduct({
         name: "",
         price: "",
@@ -64,113 +69,188 @@ const AddProduct = () => {
       setImagePreview(null);
     } catch (error) {
       console.error("Error adding product:", error);
-      alert("Failed to add product.");
+      toast.error(error.response?.data?.message || "Failed to add product.", { id: loadingToast });
     }
   };
 
   return (
-    <div className="p-6 max-w-lg mx-auto bg-white shadow-md rounded-lg">
-      <h1 className="text-2xl font-bold mb-4">Add New Product</h1>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <input
-          type="text"
-          name="name"
-          placeholder="Product Name"
-          value={product.name}
-          onChange={handleChange}
-          className="w-full p-2 border rounded"
-          required
-        />
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="p-6 max-w-2xl mx-auto"
+    >
+      <div className="bg-white shadow-xl rounded-2xl p-8">
+        <h1 className="text-3xl font-bold mb-2 text-green-600">Add New Product</h1>
+        <p className="text-gray-600 mb-6">Fill in the details to list your product on the marketplace</p>
 
-        {/* Price and Unit */}
-        <div className="flex gap-2">
-          <input
-            type="number"
-            name="price"
-            placeholder="Price"
-            value={product.price}
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <Input
+            type="text"
+            name="name"
+            placeholder="e.g., Fresh Organic Tomatoes"
+            label="Product Name"
+            value={product.name}
             onChange={handleChange}
-            className="w-3/4 p-2 border rounded"
-            min="0"
             required
           />
-          <select
-            name="unit"
-            value={product.unit}
-            onChange={handleChange}
-            className="w-1/4 p-2 border rounded"
-          >
-            <option value="kg">Kg</option>
-            <option value="liters">Liters</option>
-            <option value="pieces">Pieces</option>
-          </select>
-        </div>
 
-        {/* Category */}
-        <select
-          name="category"
-          value={product.category}
-          onChange={handleChange}
-          className="w-full p-2 border rounded"
-          required
-        >
-          <option value="Fruits">Fruits</option>
-          <option value="Vegetables">Vegetables</option>
-          <option value="Dairy">Dairy Products</option>
-          <option value="Meat">Meat</option>
-          <option value="Grains">Grains</option>
-        </select>
+          {/* Price and Unit */}
+          <div className="grid grid-cols-3 gap-4">
+            <div className="col-span-2">
+              <Input
+                type="number"
+                name="price"
+                placeholder="0.00"
+                label="Price (KSh)"
+                value={product.price}
+                onChange={handleChange}
+                min="0"
+                step="0.01"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Unit <span className="text-red-500">*</span>
+              </label>
+              <select
+                name="unit"
+                value={product.unit}
+                onChange={handleChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition-all"
+              >
+                <option value="kg">Kg</option>
+                <option value="liters">Liters</option>
+                <option value="pieces">Pieces</option>
+              </select>
+            </div>
+          </div>
 
-        {/* Stock */}
-        <input
-          type="number"
-          name="stock"
-          placeholder="Stock Available"
-          value={product.stock}
-          onChange={handleChange}
-          className="w-full p-2 border rounded"
-          min="0"
-          required
-        />
+          {/* Category and Stock */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Category <span className="text-red-500">*</span>
+              </label>
+              <select
+                name="category"
+                value={product.category}
+                onChange={handleChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition-all"
+                required
+              >
+                <option value="Fruits">Fruits</option>
+                <option value="Vegetables">Vegetables</option>
+                <option value="Dairy">Dairy Products</option>
+                <option value="Meat">Meat</option>
+                <option value="Grains">Grains</option>
+              </select>
+            </div>
+            <Input
+              type="number"
+              name="stock"
+              placeholder="Available quantity"
+              label="Stock Available"
+              value={product.stock}
+              onChange={handleChange}
+              min="0"
+              required
+            />
+          </div>
 
-        {/* Description */}
-        <textarea
-          name="description"
-          placeholder="Description"
-          value={product.description}
-          onChange={handleChange}
-          className="w-full p-2 border rounded"
-          required
-        ></textarea>
+          {/* Description */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Description <span className="text-red-500">*</span>
+            </label>
+            <motion.textarea
+              whileFocus={{ scale: 1.01 }}
+              name="description"
+              placeholder="Describe your product, its quality, origin, etc."
+              value={product.description}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition-all min-h-[100px]"
+              required
+            />
+          </div>
 
-        {/* Image Upload */}
-        <label className="block text-sm font-semibold">Insert Image</label>
-        <input
-          type="file"
-          name="productImage"
-          accept="image/*"
-          onChange={handleImageChange}
-          className="w-full p-2 border rounded"
-          required
-        />
+          {/* Image Upload */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Product Image <span className="text-red-500">*</span>
+            </label>
+            <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-green-500 transition-colors">
+              <div className="space-y-2 text-center">
+                {imagePreview ? (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="relative"
+                  >
+                    <img
+                      src={imagePreview}
+                      alt="Preview"
+                      className="mx-auto h-48 w-auto object-cover rounded-lg"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setImagePreview(null);
+                        setProduct({ ...product, productImage: null });
+                      }}
+                      className="mt-2 text-sm text-red-600 hover:text-red-700"
+                    >
+                      Remove image
+                    </button>
+                  </motion.div>
+                ) : (
+                  <>
+                    <svg
+                      className="mx-auto h-12 w-12 text-gray-400"
+                      stroke="currentColor"
+                      fill="none"
+                      viewBox="0 0 48 48"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                        strokeWidth={2}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                    <div className="text-sm text-gray-600">
+                      <label
+                        htmlFor="file-upload"
+                        className="relative cursor-pointer bg-white rounded-md font-medium text-green-600 hover:text-green-500 focus-within:outline-none"
+                      >
+                        <span>Upload a file</span>
+                        <input
+                          id="file-upload"
+                          name="productImage"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageChange}
+                          className="sr-only"
+                          required
+                        />
+                      </label>
+                      <p className="pl-1">or drag and drop</p>
+                    </div>
+                    <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
 
-        {/* Image Preview */}
-        {imagePreview && (
-          <img
-            src={imagePreview}
-            alt="Preview"
-            className="w-full h-32 object-cover rounded mt-2"
-          />
-        )}
-
-        <button
-          type="submit"
-          className="w-full bg-green-500 text-white p-2 rounded"
-        >
-          Add Product
-        </button>
-      </form>
-    </div>
+          <Button type="submit" className="w-full" size="lg">
+            Add Product to Marketplace
+          </Button>
+        </form>
+      </div>
+    </motion.div>
   );
 };
 

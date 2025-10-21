@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
 import { farmerLogin, buyerLogin } from "../api";
+import Button from "../components/Button";
+import Input from "../components/Input";
+import { motion } from "framer-motion";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -52,9 +55,14 @@ const Login = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-green-200 to-green-500">
-      <div className="bg-white bg-opacity-90 p-10 rounded-2xl shadow-xl w-96 transform transition duration-500 hover:scale-[1.02]">
-        <h2 className="text-3xl font-bold text-center text-green-800 mb-6">
+    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="bg-white p-10 rounded-2xl shadow-lg w-96"
+      >
+        <h2 className="text-3xl font-bold text-center text-gray-800 mb-6">
           Welcome Back
         </h2>
         {error && (
@@ -62,20 +70,18 @@ const Login = () => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          <input
+          <Input
             type="email"
             placeholder="Email Address"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
             required
           />
-          <input
+          <Input
             type="password"
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
             required
           />
           <select
@@ -86,12 +92,9 @@ const Login = () => {
             <option value="buyer">Buyer</option>
             <option value="farmer">Farmer</option>
           </select>
-          <button
-            type="submit"
-            className="w-full bg-green-600 text-white py-3 rounded-lg text-lg font-semibold hover:bg-green-700 transition duration-300"
-          >
+          <Button type="submit" className="w-full">
             Login
-          </button>
+          </Button>
         </form>
 
         <p className="text-sm mt-5 text-center text-gray-700">
@@ -103,7 +106,7 @@ const Login = () => {
             Sign up
           </a>
         </p>
-      </div>
+      </motion.div>
     </div>
   );
 };

@@ -1,7 +1,7 @@
 import axios from 'axios';
 import Cookies from 'js-cookie';
 
-const API = axios.create({ baseURL: 'http://localhost:3000'});
+const API = axios.create({ baseURL: import.meta.env.VITE_BACKEND_URL });
 
 // Attach token from cookies
 API.interceptors.request.use((req) => {

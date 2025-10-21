@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { FaSearch } from "react-icons/fa";
 import { getProducts } from "../../api";
+import Button from "../../components/Button";
+import Input from "../../components/Input";
+import { motion } from "framer-motion";
 
 const PRODUCTS_PER_PAGE = 10;
 
@@ -49,67 +52,93 @@ const Marketplace = () => {
     fetchProducts();
   }, [currentPage, debouncedSearchTerm, selectedCategory]);
 
+  const SkeletonCard = () => (
+    <div className="flex flex-col p-5 rounded-xl shadow-lg bg-white">
+      <div className="w-full h-52 bg-gray-200 rounded-lg animate-pulse"></div>
+      <div className="mt-4">
+        <div className="w-3/4 h-6 bg-gray-200 rounded animate-pulse mb-2"></div>
+        <div className="w-1/2 h-4 bg-gray-200 rounded animate-pulse"></div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="p-6 max-w-7xl mx-auto min-h-screen">
-      <h1 className="text-4xl font-bold mb-8 text-center text-yellow-300">
-        <span className="text-green-800">Market</span>place
-      </h1>
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <h1 className="text-4xl font-bold mb-8 text-center text-green-600">
+          Marketplace
+        </h1>
 
-      {/* Search & Filter */}
-      <div className="flex flex-col md:flex-row gap-4 mb-8 items-center justify-center">
-        {/* Search Bar */}
-        <div className="relative w-full md:w-2/3">
-          <input
-            type="text"
-            placeholder="Search for products..."
-            className="w-full p-4 pl-12 border border-gray-300 rounded-full shadow-sm focus:ring-2 focus:ring-blue-400 focus:outline-none"
-            value={searchTerm}
+        {/* Search & Filter */}
+        <div className="flex flex-col md:flex-row gap-4 mb-8 items-center justify-center">
+          {/* Search Bar */}
+          <div className="relative w-full md:w-2/3">
+            <Input
+              type="text"
+              placeholder="Search for products..."
+              className="pl-12"
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
+            />
+            <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500" />
+          </div>
+
+          {/* Category Filter */}
+          <select
+            className="p-4 border border-gray-300 rounded-full shadow-sm bg-white cursor-pointer focus:ring-2 focus:ring-green-500"
+            value={selectedCategory}
             onChange={(e) => {
-              setSearchTerm(e.target.value);
+              setSelectedCategory(e.target.value);
               setCurrentPage(1);
             }}
-          />
-          <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500" />
+          >
+            <option value="all">All Categories</option>
+            {[...new Set(products.map((p) => p.category).filter(Boolean))].map(
+              (category) => (
+                <option key={category} value={category}>
+                  {category.charAt(0).toUpperCase() + category.slice(1)}
+                </option>
+              )
+            )}
+          </select>
         </div>
-
-        {/* Category Filter */}
-        <select
-          className="p-4 border border-gray-300 rounded-full shadow-sm bg-white cursor-pointer focus:ring-2 focus:ring-blue-400"
-          value={selectedCategory}
-          onChange={(e) => {
-            setSelectedCategory(e.target.value);
-            setCurrentPage(1);
-          }}
-        >
-          <option value="all">All Categories</option>
-          {[...new Set(products.map((p) => p.category).filter(Boolean))].map(
-            (category) => (
-              <option key={category} value={category}>
-                {category.charAt(0).toUpperCase() + category.slice(1)}
-              </option>
-            )
-          )}
-        </select>
-      </div>
+      </motion.div>
 
       {/* Product Listing */}
       {loading ? (
-        <p className="text-center text-gray-500 text-lg">Loading products...</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {[...Array(PRODUCTS_PER_PAGE)].map((_, i) => <SkeletonCard key={i} />)}
+        </div>
       ) : error ? (
         <p className="text-center text-red-500 text-lg">{error}</p>
       ) : products.length > 0 ? (
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
+        >
           {products.map((product) => (
-            <div
+            <motion.div
               key={product._id}
-              className="flex flex-col p-5 rounded-xl shadow-lg bg-green-100 hover:shadow-2xl transition-transform transform hover:scale-105"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="flex flex-col p-5 rounded-xl shadow-lg bg-white hover:shadow-2xl transition-shadow"
             >
               {/* Product Image */}
               <img
                 src={
                   product.productImage.startsWith("http")
                     ? product.productImage
-                    : `http://localhost:3000/${product.productImage}`
+                    : `${import.meta.env.VITE_BACKEND_URL}/${product.productImage}`
                 }
                 alt={product.name}
                 className="w-full h-auto max-h-52 object-cover rounded-lg"
@@ -122,7 +151,7 @@ const Marketplace = () => {
                 </h2>
                 <p className="text-gray-600 mt-1 font-medium">
                   Price:{" "}
-                  <span className="text-blue-600 font-semibold">
+                  <span className="text-green-600 font-semibold">
                     Ksh {product.price}/{product.unit}
                   </span>
                 </p>
@@ -134,16 +163,13 @@ const Marketplace = () => {
                 </p>
 
                 {/* View Details Button */}
-                <Link
-                  to={`/buyer-dashboard/product/${product._id}`}
-                  className="mt-auto block text-center bg-blue-600 text-white px-5 py-3 rounded-full hover:bg-blue-700 transition"
-                >
-                  View Details
+                <Link to={`/buyer-dashboard/product/${product._id}`} className="mt-auto">
+                  <Button className="w-full mt-4">View Details</Button>
                 </Link>
               </div>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       ) : (
         <p className="col-span-full text-center text-gray-500 text-lg">
           No products found.
@@ -153,43 +179,30 @@ const Marketplace = () => {
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex justify-center mt-8 space-x-3">
-          <button
+          <Button
             onClick={() => setCurrentPage((prev) => prev - 1)}
             disabled={currentPage === 1}
-            className={`px-5 py-3 rounded-full ${
-              currentPage === 1
-                ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                : "bg-blue-500 text-white hover:bg-blue-600"
-            }`}
           >
             Prev
-          </button>
+          </Button>
 
           {[...Array(totalPages).keys()].map((num) => (
-            <button
+            <Button
               key={num + 1}
               onClick={() => setCurrentPage(num + 1)}
-              className={`px-5 py-3 rounded-full ${
-                currentPage === num + 1
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-              }`}
+              variant={currentPage === num + 1 ? "primary" : "secondary"}
+              size="sm"
             >
               {num + 1}
-            </button>
+            </Button>
           ))}
 
-          <button
+          <Button
             onClick={() => setCurrentPage((prev) => prev + 1)}
             disabled={currentPage === totalPages}
-            className={`px-5 py-3 rounded-full ${
-              currentPage === totalPages
-                ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                : "bg-blue-500 text-white hover:bg-blue-600"
-            }`}
           >
             Next
-          </button>
+          </Button>
         </div>
       )}
     </div>

@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
+import toast from "react-hot-toast";
+import { motion } from "framer-motion";
 import { getProductDetails, getFarmerProfile, pushToCart } from "../api";
-import { FaPhone, FaMapMarkerAlt, FaStar } from "react-icons/fa";
+import { FaPhone, FaMapMarkerAlt, FaStar, FaHeart } from "react-icons/fa";
 import Cookies from "js-cookie";
+import Button from "../components/Button";
 
 const ProductDetails = () => {
   const { id } = useParams();
@@ -12,6 +15,7 @@ const ProductDetails = () => {
   const [error, setError] = useState(null);
   const [farmerLoading, setFarmerLoading] = useState(true);
   const [farmerError, setFarmerError] = useState(null);
+  const [isWishlisted, setIsWishlisted] = useState(false);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -55,17 +59,47 @@ const ProductDetails = () => {
     }
   }, [id]);
 
+  useEffect(() => {
+    try {
+      const wishlist = JSON.parse(localStorage.getItem("wishlist") || "[]");
+      setIsWishlisted(wishlist.some((item) => item._id === id));
+    } catch (error) {
+      console.error("Error parsing wishlist from localStorage:", error);
+      setIsWishlisted(false);
+    }
+  }, [id]);
+
+  const toggleWishlist = () => {
+    try {
+      const wishlist = JSON.parse(localStorage.getItem("wishlist") || "[]");
+      const productIndex = wishlist.findIndex((item) => item._id === id);
+
+      if (productIndex > -1) {
+        wishlist.splice(productIndex, 1);
+        toast.success("Removed from wishlist");
+      } else {
+        wishlist.push(product);
+        toast.success("Added to wishlist");
+      }
+
+      localStorage.setItem("wishlist", JSON.stringify(wishlist));
+      setIsWishlisted(!isWishlisted);
+    } catch (error) {
+      console.error("Error parsing or updating wishlist in localStorage:", error);
+      toast.error("Failed to update wishlist");
+    }
+  };
+
   const addToCart = async () => {
     if (!product) return;
 
     const buyerId = Cookies.get("id");
 
     if (!buyerId) {
-      alert("You need to be logged in to add items to the cart.");
+      toast.error("You need to be logged in to add items to the cart.");
       return;
     }
 
-    // buyerId, product
     const cartItem = {
       buyerId,
       product: {
@@ -74,14 +108,13 @@ const ProductDetails = () => {
       },
     };
 
-    // console.log("Adding to cart:", cartItem); // Debugging
-
+    const loadingToast = toast.loading("Adding to cart...");
     try {
       await pushToCart(cartItem);
-      alert(`${product.name} added to cart!`);
+      toast.success(`${product.name} added to cart!`, { id: loadingToast });
     } catch (error) {
-      // console.error("Error adding to cart:", error); // Debugging
-      alert(error.response?.data?.message || "Failed to add to cart.");
+      console.error("Error adding to cart:", error);
+      toast.error(error.response?.data?.message || "Failed to add to cart.", { id: loadingToast });
     }
   };
 
@@ -98,8 +131,8 @@ const ProductDetails = () => {
           <img
             src={
               product.productImage
-                ? `http://localhost:3000/${product.productImage}`
-                : "https://source.unsplash.com/400x300/?farm,produce"
+                ? `${import.meta.env.VITE_BACKEND_URL}/${product.productImage}`
+                : "https://via.placeholder.com/400"
             }
             alt={product.name}
             className="w-full mt-4 rounded-xl shadow-md"
@@ -114,12 +147,21 @@ const ProductDetails = () => {
             <p className="text-lg font-semibold text-gray-700">Description:</p>
             <p className="text-gray-600">{product.description}</p>
           </div>
-          <button
-            onClick={addToCart}
-            className="mt-6 p-3 bg-blue-500 text-white font-semibold rounded-lg w-full transition hover:bg-blue-600 transform hover:scale-105"
-          >
-            Add to Cart 🛒
-          </button>
+          <div className="flex gap-4 mt-6">
+            <Button
+              onClick={addToCart}
+              className="w-full"
+            >
+              Add to Cart 🛒
+            </Button>
+            <Button
+              onClick={toggleWishlist}
+              className={`w-full ${isWishlisted ? "bg-red-500" : "bg-gray-300 text-gray-800"}`}
+            >
+              <FaHeart className="mr-2" />
+              {isWishlisted ? "Remove from Wishlist" : "Add to Wishlist"}
+            </Button>
+          </div>
         </div>
 
         {/* Farmer Details */}

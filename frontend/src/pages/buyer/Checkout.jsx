@@ -73,7 +73,7 @@ const Checkout = () => {
           <h2 className="text-xl font-bold mt-4">Total: KES {totalPrice}</h2>
           <button
             onClick={handleConfirmOrder}
-            className="mt-4 block w-full p-4 bg-blue-500 text-white rounded-lg text-center"
+            className="mt-4 block w-full p-4 bg-green-600 text-white rounded-lg text-center hover:bg-green-700 transition"
             disabled={submitting}
           >
             {submitting ? "Confirming..." : "Confirm Order"}

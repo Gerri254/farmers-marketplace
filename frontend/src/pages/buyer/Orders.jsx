@@ -60,14 +60,14 @@ const Orders = () => {
       case "Cancelled":
         return "bg-red-100 text-red-800 border-red-300";
       default:
-        return "bg-blue-100 text-blue-800 border-blue-300";
+        return "bg-gray-100 text-gray-800 border-gray-300";
     }
   };
 
   if (loading)
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-600"></div>
       </div>
     );
 
@@ -102,7 +102,7 @@ const Orders = () => {
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            className="w-full sm:w-auto bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full sm:w-auto bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
           >
             <option value="All">All Orders</option>
             <option value="Pending">Pending</option>
@@ -158,7 +158,7 @@ const Orders = () => {
                   {/* Product Image */}
                   <div className="w-full md:w-32 flex-shrink-0">
                     <img
-                      src={`http://localhost:3000/${order.product.productImage}`}
+                      src={`${import.meta.env.VITE_BACKEND_URL}/${order.product.productImage}`}
                       alt={order.product.name}
                       className="w-full h-32 object-cover rounded-md shadow-sm"
                       onError={(e) => {

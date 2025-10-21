@@ -166,7 +166,7 @@ const Cart = () => {
                       {/* Product Image */}
                       <div className="flex-shrink-0">
                         <img
-                          src={`http://localhost:3000/${item.productImage}`}
+                          src={`${import.meta.env.VITE_BACKEND_URL}/${item.productImage}`}
                           alt={item.name}
                           className="w-24 h-24 object-cover rounded-md shadow-sm"
                           onError={(e) => {
