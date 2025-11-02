@@ -2,6 +2,11 @@ const Recommendation = require('../models/recommendation');
 const User = require('../models/user');
 const EnvironmentalData = require('../models/environmentalData');
 const logger = require('../v1.utils/log');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+
+// Initialize Gemini AI
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro-latest' });
 
 class RecommendationController {
     /**
@@ -298,70 +303,250 @@ class RecommendationController {
     }
 
     /**
-     * Private method: Generate recommendation using rule-based logic
-     * This is a simplified version for Phase 1
-     * In Phase 2, this will be replaced with ML model
+     * Private method: Generate recommendation using Gemini AI
+     * Uses Google's Gemini AI to generate intelligent crop recommendations
      */
     async _generateRecommendation(farmer, environmentalData) {
-        // Simple rule-based recommendation logic
         const county = farmer.farm.location.county;
         const soilType = farmer.farm.soilType || environmentalData?.soil?.type || "Unknown";
         const season = this._getCurrentSeason();
 
-        // County-specific crop recommendations (based on project spec pilot locations)
-        let recommendedCrop, confidence, factors;
+        // Prepare farmer profile data
+        const farmerProfile = {
+            farmName: farmer.farm?.farmName || "Not specified",
+            county: county,
+            landSizeAcres: farmer.farm.landSize || "Not specified",
+            soilType: soilType,
+            irrigation: farmer.farm.irrigationType || "None",
+            historicalYields: farmer.historicalYields || []
+        };
 
-        if (county === "Trans-Nzoia") {
-            // Trans-Nzoia is known for maize farming
-            recommendedCrop = "Maize";
-            confidence = 85;
-            factors = {
-                soilCompatibility: { score: 90, description: "Trans-Nzoia soils are excellent for maize" },
-                climateMatch: { score: 85, description: "Climate is suitable for maize production" },
-                marketDemand: { score: 80, description: "High demand for maize in Kenya" },
-                historicalSuccess: { score: 85, description: "Trans-Nzoia is a major maize-growing region" },
-                waterAvailability: { score: 75, description: "Adequate rainfall for maize" },
-                seasonalSuitability: { score: 90, description: "Current season is ideal for maize planting" }
+        // Prepare weather data
+        const weatherData = environmentalData ? {
+            temperature: environmentalData.weather.temperature,
+            rainfall: environmentalData.weather.rainfall,
+            humidity: environmentalData.weather.humidity,
+            conditions: environmentalData.weather.conditions,
+            droughtRisk: environmentalData.climateIndicators?.droughtRisk || "Unknown",
+            floodRisk: environmentalData.climateIndicators?.floodRisk || "Unknown"
+        } : {
+            temperature: { avg: null },
+            rainfall: { monthly: null },
+            note: "No recent weather data available"
+        };
+
+        // Prepare market data (can be enhanced with real market API later)
+        const marketData = {
+            demand: "Stable",
+            prices: "Average for Kenya",
+            season: season
+        };
+
+        // Create comprehensive prompt for Gemini
+        const prompt = `You are an expert agricultural advisor for Kenyan farmers. Your goal is to provide a highly relevant, data-driven crop recommendation.
+
+**Context:**
+1. **Farmer Profile:** ${JSON.stringify(farmerProfile, null, 2)}
+2. **Real-time Weather Data:** ${JSON.stringify(weatherData, null, 2)}
+3. **Market Data:** ${JSON.stringify(marketData, null, 2)}
+
+**Your Task:**
+Based on all the provided context, recommend the single best crop for this farmer to plant in the upcoming season.
+
+**Reasoning Instructions:**
+- Analyze the farmer's soil type, land size, and location (${county}, Kenya).
+- Cross-reference this with the provided real-time weather data (temperature, rainfall, drought risk).
+- Consider the market demand and potential profitability from the market data.
+- Your recommendation should be practical and tailored to the farmer's specific conditions in ${county}, Kenya.
+
+**Output Format:**
+You MUST respond with ONLY a valid JSON object. Do not include any markdown formatting, code blocks, or additional text. The JSON object must have this exact structure:
+
+{
+  "recommendedCrop": "Name of the Crop",
+  "confidenceScore": 85,
+  "explanation": {
+    "summary": "A brief, one-sentence summary of why you chose this crop.",
+    "keyFactors": [
+      {
+        "factor": "Soil and Climate Match",
+        "reasoning": "Explain how the crop matches the farmer's soil and the local climate."
+      },
+      {
+        "factor": "Weather Resilience",
+        "reasoning": "Explain how the crop choice is resilient to the forecasted weather."
+      },
+      {
+        "factor": "Market Opportunity",
+        "reasoning": "Explain the market demand and potential profitability for this crop."
+      }
+    ]
+  },
+  "guidance": {
+    "bestPlantingTime": "Suggest the best planting season or months",
+    "expectedYield": "Provide an estimated yield per acre in Kg",
+    "potentialRevenue": "Estimate the potential revenue per acre in KES"
+  }
+}`;
+
+        try {
+            // Call Gemini AI
+            logger.info(`Calling Gemini AI for crop recommendation for ${county}`);
+            const result = await model.generateContent(prompt);
+            const response = await result.response;
+            const responseText = response.text();
+
+            // Parse the AI response
+            logger.info('Gemini AI response received, parsing JSON...');
+
+            // Clean the response (remove markdown code blocks if present)
+            let cleanedResponse = responseText.trim();
+            cleanedResponse = cleanedResponse.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+
+            const aiRecommendation = JSON.parse(cleanedResponse);
+
+            // Calculate validity period (3 months)
+            const validUntil = new Date();
+            validUntil.setMonth(validUntil.getMonth() + 3);
+
+            // Build the final recommendation object
+            return {
+                farmerId: farmer._id,
+                farmLocation: {
+                    county: county,
+                    subCounty: farmer.farm.location.subCounty,
+                    coordinates: farmer.farm.location.gpsCoordinates
+                },
+                recommendedCrop: aiRecommendation.recommendedCrop,
+                confidence: aiRecommendation.confidenceScore,
+                factors: this._convertToFactorsFormat(aiRecommendation.explanation.keyFactors),
+                explanation: {
+                    summary: aiRecommendation.explanation.summary,
+                    keyFactors: aiRecommendation.explanation.keyFactors.map(kf => ({
+                        factor: kf.factor,
+                        impact: "Positive",
+                        explanation: kf.reasoning
+                    }))
+                },
+                marketData: {
+                    currentPrice: {
+                        amount: this._getMarketPrice(aiRecommendation.recommendedCrop),
+                        unit: "per Kg",
+                        currency: "KES"
+                    },
+                    projectedDemand: {
+                        level: "High",
+                        forecast: "Demand expected to remain strong"
+                    }
+                },
+                guidance: {
+                    bestPlantingTime: {
+                        season: aiRecommendation.guidance.bestPlantingTime,
+                        startDate: new Date(),
+                        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+                    },
+                    expectedYield: {
+                        average: aiRecommendation.guidance.expectedYield,
+                        unit: "Kg per acre"
+                    },
+                    potentialRevenue: {
+                        estimated: aiRecommendation.guidance.potentialRevenue,
+                        currency: "KES"
+                    }
+                },
+                risks: {
+                    overall: weatherData.droughtRisk === "High" || weatherData.floodRisk === "High" ? "High" : "Moderate",
+                    identified: this._identifyRisks(weatherData)
+                },
+                inputData: {
+                    environmentalDataId: environmentalData?._id,
+                    soilType,
+                    landSize: farmer.farm.landSize,
+                    irrigationType: farmer.farm.irrigationType,
+                    currentSeason: season
+                },
+                modelInfo: {
+                    modelVersion: "2.0.0-gemini-ai",
+                    modelType: "Gemini AI (Google Generative AI)",
+                    trainingDate: new Date(),
+                    apiModel: "gemini-1.5-pro-latest"
+                },
+                validUntil,
+                priority: "Medium"
             };
-        } else if (county === "Kirinyaga") {
-            // Kirinyaga is known for horticulture
-            recommendedCrop = "Tomatoes";
-            confidence = 82;
-            factors = {
-                soilCompatibility: { score: 88, description: "Volcanic soils are excellent for tomatoes" },
-                climateMatch: { score: 85, description: "Moderate temperatures ideal for tomatoes" },
-                marketDemand: { score: 90, description: "Very high demand for tomatoes" },
-                historicalSuccess: { score: 80, description: "Kirinyaga has successful horticulture history" },
-                waterAvailability: { score: 85, description: "Good water availability from Mt. Kenya" },
-                seasonalSuitability: { score: 75, description: "Season suitable for tomato production" }
+
+        } catch (error) {
+            logger.error(`Error calling Gemini AI: ${error.message}`);
+
+            // Fallback to a basic recommendation if AI fails
+            logger.warn('Falling back to basic recommendation due to AI error');
+            return this._generateFallbackRecommendation(farmer, environmentalData, season);
+        }
+    }
+
+    /**
+     * Convert AI key factors to the factors format expected by the model
+     */
+    _convertToFactorsFormat(keyFactors) {
+        const factors = {};
+        keyFactors.forEach((kf, index) => {
+            const key = kf.factor.replace(/\s+/g, '').replace(/[^a-zA-Z]/g, '');
+            factors[key] = {
+                score: 85, // Default score
+                description: kf.reasoning
             };
-        } else if (county === "Makueni") {
-            // Makueni is drought-prone, recommend drought-resistant crops
-            recommendedCrop = "Sorghum";
-            confidence = 78;
-            factors = {
-                soilCompatibility: { score: 75, description: "Soils can support sorghum" },
-                climateMatch: { score: 85, description: "Drought-resistant crop suitable for Makueni" },
-                marketDemand: { score: 70, description: "Growing demand for sorghum" },
-                historicalSuccess: { score: 75, description: "Sorghum performs well in semi-arid areas" },
-                waterAvailability: { score: 90, description: "Low water requirements match Makueni conditions" },
-                seasonalSuitability: { score: 80, description: "Good season for planting" }
-            };
-        } else {
-            // Default recommendation
-            recommendedCrop = "Kale";
-            confidence = 70;
-            factors = {
-                soilCompatibility: { score: 75, description: "Kale grows in various soil types" },
-                climateMatch: { score: 70, description: "Versatile crop for different climates" },
-                marketDemand: { score: 85, description: "Consistent demand for kale" },
-                historicalSuccess: { score: 70, description: "Widely grown across Kenya" },
-                waterAvailability: { score: 75, description: "Moderate water requirements" },
-                seasonalSuitability: { score: 70, description: "Can be grown year-round" }
-            };
+        });
+        return factors;
+    }
+
+    /**
+     * Identify risks based on weather data
+     */
+    _identifyRisks(weatherData) {
+        const risks = [];
+
+        if (weatherData.droughtRisk === "High" || weatherData.droughtRisk === "Severe") {
+            risks.push({
+                type: "Drought Risk",
+                level: weatherData.droughtRisk,
+                mitigation: "Consider drought-resistant crops and prepare irrigation systems",
+                probability: 70
+            });
         }
 
-        // Calculate validity period (3 months)
+        if (weatherData.floodRisk === "High" || weatherData.floodRisk === "Severe") {
+            risks.push({
+                type: "Flood Risk",
+                level: weatherData.floodRisk,
+                mitigation: "Ensure proper drainage and consider raised bed farming",
+                probability: 60
+            });
+        }
+
+        if (risks.length === 0) {
+            risks.push({
+                type: "Weather Risk",
+                level: "Moderate",
+                mitigation: "Monitor weather forecasts and prepare irrigation if needed",
+                probability: 40
+            });
+        }
+
+        return risks;
+    }
+
+    /**
+     * Fallback recommendation if AI fails
+     */
+    _generateFallbackRecommendation(farmer, environmentalData, season) {
+        const county = farmer.farm.location.county;
+        let recommendedCrop = "Maize"; // Default
+
+        // Simple county-based fallback
+        if (county === "Trans-Nzoia") recommendedCrop = "Maize";
+        else if (county === "Kirinyaga") recommendedCrop = "Tomatoes";
+        else if (county === "Makueni") recommendedCrop = "Sorghum";
+
         const validUntil = new Date();
         validUntil.setMonth(validUntil.getMonth() + 3);
 
@@ -373,25 +558,17 @@ class RecommendationController {
                 coordinates: farmer.farm.location.gpsCoordinates
             },
             recommendedCrop,
-            confidence,
-            factors,
+            confidence: 70,
+            factors: {
+                location: { score: 75, description: "Based on county location" }
+            },
             explanation: {
-                summary: `Based on ${county}'s agricultural profile, soil conditions, and market demand, we recommend ${recommendedCrop}. This crop is well-suited to your location and has strong market potential.`,
+                summary: `Fallback recommendation for ${county}: ${recommendedCrop} is a suitable crop for this region.`,
                 keyFactors: [
                     {
-                        factor: "Location Suitability",
-                        impact: "Very Positive",
-                        explanation: `${county} has favorable conditions for ${recommendedCrop} production`
-                    },
-                    {
-                        factor: "Market Demand",
+                        factor: "Location",
                         impact: "Positive",
-                        explanation: `Strong market demand ensures good selling prices for ${recommendedCrop}`
-                    },
-                    {
-                        factor: "Seasonal Timing",
-                        impact: "Positive",
-                        explanation: `Current ${season} season is suitable for planting`
+                        explanation: `${recommendedCrop} is commonly grown in ${county}`
                     }
                 ]
             },
@@ -402,15 +579,15 @@ class RecommendationController {
                     currency: "KES"
                 },
                 projectedDemand: {
-                    level: "High",
-                    forecast: "Demand expected to remain strong"
+                    level: "Moderate",
+                    forecast: "Stable demand"
                 }
             },
             guidance: {
                 bestPlantingTime: {
                     season: season,
                     startDate: new Date(),
-                    endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days from now
+                    endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
                 },
                 expectedYield: {
                     average: this._getExpectedYield(recommendedCrop),
@@ -419,25 +596,23 @@ class RecommendationController {
             },
             risks: {
                 overall: "Moderate",
-                identified: [
-                    {
-                        type: "Weather Risk",
-                        level: "Moderate",
-                        mitigation: "Monitor weather forecasts and prepare irrigation if needed",
-                        probability: 40
-                    }
-                ]
+                identified: [{
+                    type: "Weather Risk",
+                    level: "Moderate",
+                    mitigation: "Monitor weather conditions",
+                    probability: 40
+                }]
             },
             inputData: {
                 environmentalDataId: environmentalData?._id,
-                soilType,
+                soilType: farmer.farm.soilType,
                 landSize: farmer.farm.landSize,
                 irrigationType: farmer.farm.irrigationType,
                 currentSeason: season
             },
             modelInfo: {
-                modelVersion: "1.0.0-rule-based",
-                modelType: "Hybrid",
+                modelVersion: "1.0.0-fallback",
+                modelType: "Rule-based fallback",
                 trainingDate: new Date()
             },
             validUntil,
