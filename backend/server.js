@@ -6,6 +6,7 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const path = require('path');
 const logger = require('./v1.utils/log');
+const cronJobs = require('./v1.services/cronJobs');
 
 dotenv.config();
 
@@ -28,4 +29,21 @@ app.get('/', (req, res) => {
 
 app.listen(PORT, "0.0.0.0", () => {
     logger.info(`Server running on http://0.0.0.0:${PORT}`);
+
+    // Start cron jobs for automated weather data collection
+    cronJobs.startAll();
+    logger.info('Automated weather data collection enabled');
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+    logger.info('SIGTERM signal received: closing server');
+    cronJobs.stopAll();
+    process.exit(0);
+});
+
+process.on('SIGINT', () => {
+    logger.info('SIGINT signal received: closing server');
+    cronJobs.stopAll();
+    process.exit(0);
 });

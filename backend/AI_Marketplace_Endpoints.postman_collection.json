@@ -1,0 +1,650 @@
+{
+	"info": {
+		"_postman_id": "ai-marketplace-2025",
+		"name": "AI-Driven Agricultural Marketplace - API Collection",
+		"description": "Complete API collection for testing the AI-Driven Agricultural Marketplace with 23 new endpoints",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. AUTHENTICATION",
+			"item": [
+				{
+					"name": "Register Farmer",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"John Kamau\",\n  \"email\": \"john.kamau@example.com\",\n  \"password\": \"password123\",\n  \"phone\": \"+254712345678\",\n  \"role\": \"farmer\",\n  \"farm\": {\n    \"farmName\": \"Green Valley Farm\",\n    \"location\": \"Trans-Nzoia\"\n  }\n}"
+						},
+						"url": {
+							"raw": "http://localhost:3000/api/v1/farmer/register",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "3000",
+							"path": ["api", "v1", "farmer", "register"]
+						}
+					}
+				},
+				{
+					"name": "Login Farmer",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"john.kamau@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"farmer\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:3000/api/v1/farmer/login",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "3000",
+							"path": ["api", "v1", "farmer", "login"]
+						}
+					}
+				},
+				{
+					"name": "Register Buyer",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Mary Wanjiru\",\n  \"email\": \"mary.wanjiru@example.com\",\n  \"password\": \"password123\",\n  \"phone\": \"+254723456789\",\n  \"role\": \"buyer\",\n  \"address\": \"Nairobi, Kenya\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:3000/api/v1/buyer/register",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "3000",
+							"path": ["api", "v1", "buyer", "register"]
+						}
+					}
+				},
+				{
+					"name": "Login Buyer",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"mary.wanjiru@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"buyer\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:3000/api/v1/buyer/login",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "3000",
+							"path": ["api", "v1", "buyer", "login"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "2. FARMER PROFILE MANAGEMENT",
+			"item": [
+				{
+					"name": "Update Farm Details",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{farmer_token}}",
+								"description": "Replace with actual token from login"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"farmerId\": \"{{farmer_id}}\",\n  \"farmName\": \"Green Valley Farm\",\n  \"location\": {\n    \"county\": \"Trans-Nzoia\",\n    \"subCounty\": \"Kwanza\",\n    \"ward\": \"Keiyo\",\n    \"gpsCoordinates\": {\n      \"latitude\": 1.0667,\n      \"longitude\": 34.9667\n    }\n  },\n  \"landSize\": 5,\n  \"soilType\": \"Clay Loam\",\n  \"irrigationType\": \"Rain-fed\",\n  \"cropsGrown\": [\n    {\n      \"cropType\": \"Maize\",\n      \"plantingDate\": \"2025-03-15\",\n      \"expectedHarvestDate\": \"2025-07-15\",\n      \"estimatedYield\": 2000,\n      \"season\": \"Long Rains (March-May)\"\n    },\n    {\n      \"cropType\": \"Beans\",\n      \"plantingDate\": \"2025-03-20\",\n      \"expectedHarvestDate\": \"2025-06-20\",\n      \"estimatedYield\": 500,\n      \"season\": \"Long Rains (March-May)\"\n    }\n  ],\n  \"certifications\": [\n    {\n      \"type\": \"Organic\",\n      \"issuedDate\": \"2024-01-15\",\n      \"expiryDate\": \"2026-01-15\"\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "http://localhost:3000/api/v1/farmer/update-farm-details",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "3000",
+							"path": ["api", "v1", "farmer", "update-farm-details"]
+						}
+					}
+				},
+				{
+					"name": "Get Farm Details",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{farmer_token}}"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:3000/api/v1/farmer/farm-details/{{farmer_id}}",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "3000",
+							"path": ["api", "v1", "farmer", "farm-details", "{{farmer_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Add Historical Yield",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{farmer_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"farmerId\": \"{{farmer_id}}\",\n  \"crop\": \"Maize\",\n  \"season\": \"Long Rains (March-May)\",\n  \"year\": 2024,\n  \"actualYield\": 2100,\n  \"quality\": \"Grade A\",\n  \"sellPrice\": 45,\n  \"weather\": {\n    \"avgRainfall\": 850,\n    \"avgTemperature\": 22\n  }\n}"
+						},
+						"url": {
+							"raw": "http://localhost:3000/api/v1/farmer/add-historical-yield",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "3000",
+							"path": ["api", "v1", "farmer", "add-historical-yield"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "3. BUYER PROFILE MANAGEMENT",
+			"item": [
+				{
+					"name": "Update Buyer Profile",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{buyer_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"buyerId\": \"{{buyer_id}}\",\n  \"buyerType\": \"Institutional\",\n  \"businessName\": \"Fresh Harvest Supplies Ltd\",\n  \"businessRegistration\": \"BN-2023-12345\",\n  \"preferences\": {\n    \"preferredCrops\": [\"Tomatoes\", \"Kale\", \"Cabbage\", \"Carrots\"],\n    \"qualityStandards\": \"Grade A and Above\",\n    \"certificationRequired\": true,\n    \"deliverySchedule\": \"Weekly\",\n    \"volumeRequirements\": {\n      \"minQuantity\": 100,\n      \"maxQuantity\": 500,\n      \"frequency\": \"Weekly\"\n    },\n    \"preferredLocations\": [\"Kirinyaga\", \"Kiambu\", \"Nakuru\"],\n    \"maxDistance\": 150\n  }\n}"
+						},
+						"url": {
+							"raw": "http://localhost:3000/api/v1/buyer/update-buyer-profile",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "3000",
+							"path": ["api", "v1", "buyer", "update-buyer-profile"]
+						}
+					}
+				},
+				{
+					"name": "Get Buyer Profile",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{buyer_token}}"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:3000/api/v1/buyer/buyer-profile/{{buyer_id}}",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "3000",
+							"path": ["api", "v1", "buyer", "buyer-profile", "{{buyer_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Add Demand Forecast",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{buyer_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"buyerId\": \"{{buyer_id}}\",\n  \"product\": \"Tomatoes\",\n  \"quantity\": 300,\n  \"deadline\": \"2025-12-01\",\n  \"priority\": \"High\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:3000/api/v1/buyer/add-demand-forecast",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "3000",
+							"path": ["api", "v1", "buyer", "add-demand-forecast"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "4. ENVIRONMENTAL DATA",
+			"item": [
+				{
+					"name": "Get Environmental Data by County",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{farmer_token}}"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:3000/api/v1/environmental-data/Trans-Nzoia?limit=5",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "3000",
+							"path": ["api", "v1", "environmental-data", "Trans-Nzoia"],
+							"query": [
+								{
+									"key": "limit",
+									"value": "5"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Latest Environmental Data",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{farmer_token}}"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:3000/api/v1/environmental-data/latest/Kirinyaga",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "3000",
+							"path": ["api", "v1", "environmental-data", "latest", "Kirinyaga"]
+						}
+					}
+				},
+				{
+					"name": "Check Crop Suitability",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{farmer_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"county\": \"Kirinyaga\",\n  \"cropType\": \"Tomatoes\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:3000/api/v1/environmental-data/check-crop-suitability",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "3000",
+							"path": ["api", "v1", "environmental-data", "check-crop-suitability"]
+						}
+					}
+				},
+				{
+					"name": "Get Active Alerts",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{farmer_token}}"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:3000/api/v1/environmental-data/alerts/Makueni",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "3000",
+							"path": ["api", "v1", "environmental-data", "alerts", "Makueni"]
+						}
+					}
+				},
+				{
+					"name": "Compare Counties",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{farmer_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"counties\": [\"Trans-Nzoia\", \"Kirinyaga\", \"Makueni\"]\n}"
+						},
+						"url": {
+							"raw": "http://localhost:3000/api/v1/environmental-data/compare-counties",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "3000",
+							"path": ["api", "v1", "environmental-data", "compare-counties"]
+						}
+					}
+				},
+				{
+					"name": "Get Historical Trends",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{farmer_token}}"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:3000/api/v1/environmental-data/trends/Trans-Nzoia?months=6",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "3000",
+							"path": ["api", "v1", "environmental-data", "trends", "Trans-Nzoia"],
+							"query": [
+								{
+									"key": "months",
+									"value": "6"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Add Environmental Data (Admin)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"location\": {\n    \"county\": \"Trans-Nzoia\",\n    \"subCounty\": \"Kwanza\",\n    \"coordinates\": {\n      \"latitude\": 1.0667,\n      \"longitude\": 34.9667\n    }\n  },\n  \"date\": \"2025-11-02\",\n  \"season\": \"Off-season\",\n  \"weather\": {\n    \"temperature\": {\n      \"current\": 22,\n      \"min\": 15,\n      \"max\": 28,\n      \"avg\": 22\n    },\n    \"rainfall\": {\n      \"daily\": 0,\n      \"weekly\": 15,\n      \"monthly\": 85,\n      \"seasonal\": 250\n    },\n    \"humidity\": 65,\n    \"windSpeed\": 12,\n    \"sunlight\": {\n      \"hours\": 8,\n      \"uvIndex\": 7\n    },\n    \"conditions\": \"Partly Cloudy\"\n  },\n  \"soil\": {\n    \"type\": \"Clay Loam\",\n    \"pH\": 6.5,\n    \"nitrogen\": 45,\n    \"phosphorus\": 30,\n    \"potassium\": 150,\n    \"organicMatter\": 3.5,\n    \"moisture\": 40,\n    \"drainage\": \"Good\"\n  },\n  \"climateIndicators\": {\n    \"droughtRisk\": \"Low\",\n    \"floodRisk\": \"None\",\n    \"heatStress\": \"Low\"\n  },\n  \"dataSource\": \"Kenya Meteorological Department\",\n  \"dataQuality\": \"High\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:3000/api/v1/environmental-data/add",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "3000",
+							"path": ["api", "v1", "environmental-data", "add"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "5. AI CROP RECOMMENDATIONS",
+			"item": [
+				{
+					"name": "Request Crop Recommendation",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{farmer_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"farmerId\": \"{{farmer_id}}\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:3000/api/v1/farmer/request-recommendation",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "3000",
+							"path": ["api", "v1", "farmer", "request-recommendation"]
+						}
+					}
+				},
+				{
+					"name": "Get All Recommendations",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{farmer_token}}"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:3000/api/v1/farmer/recommendations/{{farmer_id}}?status=Pending&limit=10",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "3000",
+							"path": ["api", "v1", "farmer", "recommendations", "{{farmer_id}}"],
+							"query": [
+								{
+									"key": "status",
+									"value": "Pending"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Recommendation by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{farmer_token}}"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:3000/api/v1/farmer/recommendation/{{recommendation_id}}",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "3000",
+							"path": ["api", "v1", "farmer", "recommendation", "{{recommendation_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Accept Recommendation",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{farmer_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"recommendationId\": \"{{recommendation_id}}\",\n  \"decision\": \"Accepted\",\n  \"feedback\": \"This recommendation looks very promising! I will plant this crop next season.\",\n  \"reasonForRejection\": null\n}"
+						},
+						"url": {
+							"raw": "http://localhost:3000/api/v1/farmer/respond-to-recommendation",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "3000",
+							"path": ["api", "v1", "farmer", "respond-to-recommendation"]
+						}
+					}
+				},
+				{
+					"name": "Reject Recommendation",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{farmer_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"recommendationId\": \"{{recommendation_id}}\",\n  \"decision\": \"Rejected\",\n  \"feedback\": \"I don't have enough resources for this crop\",\n  \"reasonForRejection\": \"Insufficient capital for required inputs\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:3000/api/v1/farmer/respond-to-recommendation",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "3000",
+							"path": ["api", "v1", "farmer", "respond-to-recommendation"]
+						}
+					}
+				},
+				{
+					"name": "Update Implementation Status",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{farmer_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"recommendationId\": \"{{recommendation_id}}\",\n  \"planted\": true,\n  \"plantingDate\": \"2025-03-15\",\n  \"landAllocated\": 3,\n  \"actualYield\": 2200,\n  \"harvestDate\": \"2025-07-20\",\n  \"profitRealized\": 54000,\n  \"wasSuccessful\": true\n}"
+						},
+						"url": {
+							"raw": "http://localhost:3000/api/v1/farmer/update-implementation",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "3000",
+							"path": ["api", "v1", "farmer", "update-implementation"]
+						}
+					}
+				},
+				{
+					"name": "Get Recommendation Statistics",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{farmer_token}}"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:3000/api/v1/farmer/recommendation-stats/{{farmer_id}}",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "3000",
+							"path": ["api", "v1", "farmer", "recommendation-stats", "{{farmer_id}}"]
+						}
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "farmer_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "buyer_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "admin_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "farmer_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "buyer_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "recommendation_id",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
