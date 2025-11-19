@@ -152,3 +152,67 @@ export const fetchOrderDetails = (orderId) => {
 export const processPayment = (orderId, paymentMethod) => {
   return API.post("/api/v1/buyer/processpayment/", { orderId, paymentMethod });
 };
+
+// AI Recommendations
+export const requestRecommendation = () => {
+  const farmerId = Cookies.get("id");
+  return API.post("/api/v1/farmer/request-recommendation", { farmerId });
+};
+
+export const getRecommendations = () => {
+  const farmerId = Cookies.get("id");
+  return API.get(`/api/v1/farmer/recommendations/${farmerId}`);
+};
+
+export const getRecommendationDetails = (id) => {
+  return API.get(`/api/v1/farmer/recommendation/${id}`);
+};
+
+export const respondToRecommendation = (id, response) => {
+  return API.post("/api/v1/farmer/respond-to-recommendation", {
+    recommendationId: id,
+    response
+  });
+};
+
+export const getRecommendationStats = () => {
+  const farmerId = Cookies.get("id");
+  return API.get(`/api/v1/farmer/recommendation-stats/${farmerId}`);
+};
+
+export const updateFarmProfile = (farmData) => {
+  const farmerId = Cookies.get("id");
+  return API.post("/api/v1/farmer/update-farm-profile", { farmerId, ...farmData });
+};
+
+// Matching System
+export const generateFarmerMatches = () => {
+  return API.post("/api/v1/matching/farmer/generate");
+};
+
+export const getFarmerMatches = () => {
+  return API.get("/api/v1/matching/farmer/matches");
+};
+
+export const generateBuyerMatches = () => {
+  return API.post("/api/v1/matching/buyer/generate");
+};
+
+export const getBuyerMatches = () => {
+  return API.get("/api/v1/matching/buyer/matches");
+};
+
+export const respondToMatch = (matchId, response, role) => {
+  const endpoint = role === "farmer"
+    ? `/api/v1/matching/farmer/respond/${matchId}`
+    : `/api/v1/matching/buyer/respond/${matchId}`;
+  return API.post(endpoint, { response });
+};
+
+export const getMatchDetails = (matchId) => {
+  return API.get(`/api/v1/matching/details/${matchId}`);
+};
+
+export const getMatchStats = () => {
+  return API.get("/api/v1/matching/stats");
+};

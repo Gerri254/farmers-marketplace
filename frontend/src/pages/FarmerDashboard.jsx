@@ -3,7 +3,11 @@ import AddProduct from "./farmer/AddProduct";
 import MyProducts from "./farmer/MyProducts";
 import Orders from "./farmer/Orders";
 import Profile from "./farmer/Profile";
-import { PlusCircle, Package, ShoppingBag, User } from "lucide-react";
+import FarmProfile from "./farmer/FarmProfile";
+import CropRecommendations from "./farmer/CropRecommendations";
+import RecommendationDetails from "./farmer/RecommendationDetails";
+import MatchedBuyers from "./farmer/MatchedBuyers";
+import { PlusCircle, Package, ShoppingBag, User, Sprout, MapPin, Users } from "lucide-react";
 import "./farmer/farmer.css";
 import { motion } from "framer-motion";
 
@@ -22,6 +26,9 @@ const FarmerDashboard = () => {
       icon: <Package />,
     },
     { name: "Orders", path: "/farmer-dashboard/orders", icon: <ShoppingBag /> },
+    { name: "AI Recommendations", path: "/farmer-dashboard/recommendations", icon: <Sprout /> },
+    { name: "Farm Profile", path: "/farmer-dashboard/farm-profile", icon: <MapPin /> },
+    { name: "Matched Buyers", path: "/farmer-dashboard/matched-buyers", icon: <Users /> },
     { name: "Profile", path: "/farmer-dashboard/profile", icon: <User /> },
   ];
 
@@ -59,6 +66,10 @@ const FarmerDashboard = () => {
           <Route path="add-product" element={<AddProduct />} />
           <Route path="my-products" element={<MyProducts />} />
           <Route path="orders" element={<Orders />} />
+          <Route path="recommendations" element={<CropRecommendations />} />
+          <Route path="recommendation/:id" element={<RecommendationDetails />} />
+          <Route path="farm-profile" element={<FarmProfile />} />
+          <Route path="matched-buyers" element={<MatchedBuyers />} />
           <Route path="profile" element={<Profile />} />
           <Route path="*" element={<Navigate to="/farmer-dashboard/my-products" />} />
         </Routes>

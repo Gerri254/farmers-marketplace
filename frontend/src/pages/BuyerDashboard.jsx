@@ -6,7 +6,8 @@ import Profile from "./buyer/Profile";
 import ProductDetails from "./ProductDetails";
 import Checkout from "./buyer/Checkout";
 import Payment from "./buyer/Payment";
-import { Home, ShoppingCart, List, User, Heart } from "lucide-react";
+import MatchedFarmers from "./buyer/MatchedFarmers";
+import { Home, ShoppingCart, List, User, Heart, Users } from "lucide-react";
 import "./buyer/buyer.css";
 import { motion } from "framer-motion";
 
@@ -21,6 +22,7 @@ const BuyerDashboard = () => {
     },
     { name: "Cart", path: "/buyer-dashboard/cart", icon: <ShoppingCart /> },
     { name: "Orders", path: "/buyer-dashboard/orders", icon: <List /> },
+    { name: "Matched Farmers", path: "/buyer-dashboard/matched-farmers", icon: <Users /> },
     { name: "Profile", path: "/buyer-dashboard/profile", icon: <User /> },
     { name: "Wishlist", path: "/buyer-dashboard/wishlist", icon: <Heart /> },
   ];
@@ -59,6 +61,7 @@ const BuyerDashboard = () => {
           <Route path="marketplace" element={<Marketplace />} />
           <Route path="cart" element={<Cart />} />
           <Route path="orders" element={<Orders />} />
+          <Route path="matched-farmers" element={<MatchedFarmers />} />
           <Route path="profile" element={<Profile />} />
           <Route path="product/:id" element={<ProductDetails />} />
           <Route path="checkout" element={<Checkout />} />
