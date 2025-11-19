@@ -116,8 +116,9 @@ const Products = () => {
                           <img
                             src={
                               product.productImage
-                                ? product.productImage
-                              : `${import.meta.env.VITE_BACKEND_URL}/${product.productImage}`
+                                ? (product.productImage.startsWith('http')
+                                    ? product.productImage
+                                    : `${import.meta.env.VITE_BACKEND_URL}/${product.productImage}`)
                                 : "https://via.placeholder.com/100"
                             }
                             alt={product.name}
