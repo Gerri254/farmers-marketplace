@@ -6,7 +6,7 @@ Fast reference for testing endpoints using cURL in terminal
 
 ## 🔐 STEP 1: AUTHENTICATION
 
-### Register Farmer
+### Register Farme
 ```bash
 curl -X POST http://localhost:3000/api/v1/farmer/register \
   -H "Content-Type: application/json" \
