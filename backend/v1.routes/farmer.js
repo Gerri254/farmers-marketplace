@@ -25,6 +25,7 @@ router.get('/viewprofile/:userId', verifyToken, requireRole(["farmer"]), userCon
 // FARM DETAILS ROUTES (NEW)
 // ==========================================
 router.post('/update-farm-details', verifyToken, requireRole(["farmer"]), farmerProfileController.updateFarmDetails);
+router.post('/update-farm-profile', verifyToken, requireRole(["farmer"]), farmerProfileController.updateFarmProfile);
 router.get('/farm-details/:farmerId', verifyToken, requireRole(["farmer"]), farmerProfileController.getFarmDetails);
 router.post('/add-historical-yield', verifyToken, requireRole(["farmer"]), farmerProfileController.addHistoricalYield);
 

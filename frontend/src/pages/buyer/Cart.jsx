@@ -17,7 +17,12 @@ const Cart = () => {
         const products = response.data.cart.products || [];
         setCartItems(products);
       } catch (err) {
-        setError("Failed to load cart items.");
+        // Handle 404 as an empty cart (no cart exists yet)
+        if (err.response && err.response.status === 404) {
+          setCartItems([]);
+        } else {
+          setError("Failed to load cart items.");
+        }
       } finally {
         setLoading(false);
       }

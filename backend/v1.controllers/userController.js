@@ -125,7 +125,7 @@ class UserController {
     }
 
     async editProfile(req, res) {
-        const { id, name, email, farm, address, password, phone } = req.body;
+        const { id, name, email, farm, address, password, phone, buyerProfile } = req.body;
 
         try {
             logger.info(`Updating profile for user: ${id}`);
@@ -143,9 +143,46 @@ class UserController {
             if (user.role === "farmer") {
                 if (farm) user.farm = farm;
             }
-    
+
             if (user.role === "buyer") {
                 if (address) user.address = address;
+
+                // Update buyer profile fields
+                if (buyerProfile) {
+                    logger.info(`Buyer profile data received: ${JSON.stringify(buyerProfile)}`);
+
+                    if (!user.buyerProfile) {
+                        user.buyerProfile = {};
+                    }
+
+                    // Only update county if it has a value (not empty string)
+                    if (buyerProfile.county !== undefined && buyerProfile.county !== "") {
+                        logger.info(`Updating county to: ${buyerProfile.county}`);
+                        user.buyerProfile.county = buyerProfile.county;
+                    }
+
+                    if (buyerProfile.businessName !== undefined) {
+                        user.buyerProfile.businessName = buyerProfile.businessName;
+                    }
+
+                    if (buyerProfile.buyerType !== undefined && buyerProfile.buyerType !== "") {
+                        logger.info(`Updating buyerType to: ${buyerProfile.buyerType}`);
+                        user.buyerProfile.buyerType = buyerProfile.buyerType;
+                    }
+
+                    // Update preferences
+                    if (buyerProfile.preferences) {
+                        if (!user.buyerProfile.preferences) {
+                            user.buyerProfile.preferences = {};
+                        }
+                        if (buyerProfile.preferences.preferredCrops !== undefined) {
+                            user.buyerProfile.preferences.preferredCrops = buyerProfile.preferences.preferredCrops;
+                        }
+                    }
+
+                    // Mark buyerProfile as modified to ensure Mongoose saves it
+                    user.markModified('buyerProfile');
+                }
             }
 
             await user.save();

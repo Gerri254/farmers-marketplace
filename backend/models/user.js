@@ -39,7 +39,7 @@ const UserSchema = new mongoose.Schema({
 
         // Extended location information
         location: {
-            type: String,  // Keep existing simple string for backward compatibility
+            type: { type: String },  // Simple location string for backward compatibility
             county: {
                 type: String,
                 enum: [
@@ -171,6 +171,17 @@ const UserSchema = new mongoose.Schema({
         businessName: { type: String },
 
         businessRegistration: { type: String },
+
+        // Buyer location (for distance calculations in matching)
+        county: {
+            type: String,
+            enum: [
+                "Trans-Nzoia", "Kirinyaga", "Makueni",  // Pilot counties
+                "Nairobi", "Mombasa", "Kisumu", "Nakuru", "Uasin Gishu",
+                "Kiambu", "Meru", "Machakos", "Bungoma", "Kakamega",
+                "Other"
+            ]
+        },
 
         preferences: {
             preferredCrops: [{ type: String }],

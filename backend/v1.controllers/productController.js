@@ -20,7 +20,8 @@ class ProductController {
                 price,
                 stock,
                 farmerId,
-                productImage: req.file.path
+                productImage: req.file.path,
+                approved: true  // Auto-approve for development/testing
             });
 
             await product.save();

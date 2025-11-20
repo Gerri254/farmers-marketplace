@@ -29,10 +29,17 @@ const MatchedFarmers = () => {
     try {
       setGenerating(true);
       const response = await generateBuyerMatches();
-      toast.success(`Found ${response.data.count} potential farmers!`);
+
+      if (response.data.count === 0) {
+        toast.error(response.data.message || "No matches found. Please complete your buyer profile.");
+      } else {
+        toast.success(`Found ${response.data.count} potential farmers!`);
+      }
+
       fetchMatches();
     } catch (error) {
-      toast.error("Failed to generate matches");
+      const errorMessage = error.response?.data?.message || "Failed to generate matches";
+      toast.error(errorMessage);
       console.error(error);
     } finally {
       setGenerating(false);

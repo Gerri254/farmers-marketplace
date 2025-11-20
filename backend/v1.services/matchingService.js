@@ -49,19 +49,19 @@ class MatchingService {
   }
 
   // Calculate product match score
-  calculateProductMatchScore(farmerProducts, buyerPreferences) {
-    if (!buyerPreferences || buyerPreferences.length === 0) return 50;
+  calculateProductMatchScore(farmerProducts, buyerPreferredCrops) {
+    if (!buyerPreferredCrops || buyerPreferredCrops.length === 0) return 50;
 
     let matchedCategories = 0;
-    const buyerCats = buyerPreferences.map((p) => p.category?.toLowerCase());
+    const buyerCrops = buyerPreferredCrops.map((crop) => crop?.toLowerCase());
 
     farmerProducts.forEach((product) => {
-      if (buyerCats.includes(product.category?.toLowerCase())) {
+      if (buyerCrops.includes(product.category?.toLowerCase())) {
         matchedCategories++;
       }
     });
 
-    const score = (matchedCategories / Math.max(buyerPreferences.length, 1)) * 100;
+    const score = (matchedCategories / Math.max(buyerPreferredCrops.length, 1)) * 100;
     return Math.min(100, score);
   }
 
@@ -78,18 +78,18 @@ class MatchingService {
   }
 
   // Calculate volume match score
-  calculateVolumeMatchScore(farmerProducts, buyerDemand) {
-    if (!buyerDemand || buyerDemand.length === 0) return 50;
+  calculateVolumeMatchScore(farmerProducts, buyerDemandForecasts) {
+    if (!buyerDemandForecasts || buyerDemandForecasts.length === 0) return 50;
 
     let totalMatchScore = 0;
     let matchedItems = 0;
 
-    buyerDemand.forEach((demand) => {
+    buyerDemandForecasts.forEach((demand) => {
       const farmerProduct = farmerProducts.find(
-        (p) => p.category?.toLowerCase() === demand.category?.toLowerCase()
+        (p) => p.category?.toLowerCase() === demand.product?.toLowerCase()
       );
       if (farmerProduct) {
-        const farmerQty = farmerProduct.quantity || 0;
+        const farmerQty = farmerProduct.availableQuantity || farmerProduct.estimatedYield || 0;
         const demandQty = demand.quantity || 1;
         const ratio = Math.min(farmerQty / demandQty, 1);
         totalMatchScore += ratio * 100;
@@ -163,7 +163,9 @@ class MatchingService {
   // Calculate potential revenue
   calculatePotentialRevenue(matchedProducts) {
     return matchedProducts.reduce((sum, p) => {
-      return sum + (p.quantity || 0) * (p.price || 0);
+      const qty = p.quantity || p.availableQuantity || p.estimatedYield || 0;
+      const price = p.price || p.pricePerUnit || 0;
+      return sum + qty * price;
     }, 0);
   }
 
@@ -171,15 +173,15 @@ class MatchingService {
   async findMatchesForFarmer(farmerId) {
     try {
       // Get farmer details
-      const farmer = await User.findById(farmerId).populate("farmProfile");
+      const farmer = await User.findById(farmerId);
       if (!farmer || farmer.role !== "farmer") {
         throw new Error("Invalid farmer ID");
       }
 
       // Get farmer's products
       const farmerProducts = await Product.find({
-        farmer: farmerId,
-        status: "approved",
+        farmerId: farmerId,
+        approved: true,
       });
 
       if (farmerProducts.length === 0) {
@@ -196,8 +198,8 @@ class MatchingService {
 
         // Calculate distance
         let distance = 0;
-        if (farmer.farmProfile?.county && buyer.buyerProfile?.county) {
-          const farmerCoords = COUNTY_COORDINATES[farmer.farmProfile.county];
+        if (farmer.farm?.location?.county && buyer.buyerProfile?.county) {
+          const farmerCoords = COUNTY_COORDINATES[farmer.farm.location.county];
           const buyerCoords = COUNTY_COORDINATES[buyer.buyerProfile.county];
 
           if (farmerCoords && buyerCoords) {
@@ -214,7 +216,7 @@ class MatchingService {
         const factors = {
           productMatch: this.calculateProductMatchScore(
             farmerProducts,
-            buyer.buyerProfile?.preferences || []
+            buyer.buyerProfile?.preferences?.preferredCrops || []
           ),
           geographicProximity: this.calculateProximityScore(distance),
           qualityMatch: this.calculateQualityMatchScore(
@@ -223,12 +225,12 @@ class MatchingService {
           ),
           volumeMatch: this.calculateVolumeMatchScore(
             farmerProducts,
-            buyer.buyerProfile?.demandForecast || []
+            buyer.buyerProfile?.demandForecasts || []
           ),
           historicalSuccess: await this.calculateHistoricalSuccessScore(farmerId, buyer._id),
           priceMatch: this.calculatePriceMatchScore(
             farmerProducts,
-            buyer.buyerProfile?.budget || 0
+            buyer.buyerProfile?.preferences?.volumeRequirements?.maxQuantity || 0
           ),
         };
 
@@ -237,19 +239,19 @@ class MatchingService {
         // Only include matches with score > 40
         if (matchScore > 40) {
           // Find matched products
+          const buyerPreferredCrops = buyer.buyerProfile?.preferences?.preferredCrops || [];
           const matchedProducts = farmerProducts
             .filter((fp) => {
-              const buyerPrefs = buyer.buyerProfile?.preferences || [];
-              return buyerPrefs.some(
-                (pref) => pref.category?.toLowerCase() === fp.category?.toLowerCase()
+              return buyerPreferredCrops.some(
+                (crop) => crop?.toLowerCase() === fp.category?.toLowerCase()
               );
             })
             .map((p) => ({
               productId: p._id,
-              productName: p.productName,
+              productName: p.name || p.productName,
               category: p.category,
-              quantity: p.quantity,
-              price: p.price,
+              quantity: p.availableQuantity || p.estimatedYield || 0,
+              price: p.pricePerUnit || p.price || 0,
             }));
 
           matches.push({
@@ -286,23 +288,35 @@ class MatchingService {
         throw new Error("Invalid buyer ID");
       }
 
+      // Check if buyer has a profile - if not, return empty matches instead of erroring
+      if (!buyer.buyerProfile) {
+        console.warn(`Buyer ${buyerId} does not have a buyerProfile set up`);
+        return [];
+      }
+
+      // Also check if buyer has preferences set up
+      if (!buyer.buyerProfile.preferences || !buyer.buyerProfile.preferences.preferredCrops || buyer.buyerProfile.preferences.preferredCrops.length === 0) {
+        console.warn(`Buyer ${buyerId} does not have preferred crops set up`);
+        return [];
+      }
+
       // Get all farmers with approved products
-      const farmers = await User.find({ role: "farmer" }).populate("farmProfile");
+      const farmers = await User.find({ role: "farmer" });
       const matches = [];
 
       for (const farmer of farmers) {
         // Get farmer's products
         const farmerProducts = await Product.find({
-          farmer: farmer._id,
-          status: "approved",
+          farmerId: farmer._id,
+          approved: true,
         });
 
         if (farmerProducts.length === 0) continue;
 
         // Calculate distance
         let distance = 0;
-        if (farmer.farmProfile?.county && buyer.buyerProfile?.county) {
-          const farmerCoords = COUNTY_COORDINATES[farmer.farmProfile.county];
+        if (farmer.farm?.location?.county && buyer.buyerProfile?.county) {
+          const farmerCoords = COUNTY_COORDINATES[farmer.farm.location.county];
           const buyerCoords = COUNTY_COORDINATES[buyer.buyerProfile.county];
 
           if (farmerCoords && buyerCoords) {
@@ -319,7 +333,7 @@ class MatchingService {
         const factors = {
           productMatch: this.calculateProductMatchScore(
             farmerProducts,
-            buyer.buyerProfile?.preferences || []
+            buyer.buyerProfile?.preferences?.preferredCrops || []
           ),
           geographicProximity: this.calculateProximityScore(distance),
           qualityMatch: this.calculateQualityMatchScore(
@@ -328,12 +342,12 @@ class MatchingService {
           ),
           volumeMatch: this.calculateVolumeMatchScore(
             farmerProducts,
-            buyer.buyerProfile?.demandForecast || []
+            buyer.buyerProfile?.demandForecasts || []
           ),
           historicalSuccess: await this.calculateHistoricalSuccessScore(farmer._id, buyerId),
           priceMatch: this.calculatePriceMatchScore(
             farmerProducts,
-            buyer.buyerProfile?.budget || 0
+            buyer.buyerProfile?.preferences?.volumeRequirements?.maxQuantity || 0
           ),
         };
 
@@ -342,27 +356,27 @@ class MatchingService {
         // Only include matches with score > 40
         if (matchScore > 40) {
           // Find matched products
+          const buyerPreferredCrops = buyer.buyerProfile?.preferences?.preferredCrops || [];
           const matchedProducts = farmerProducts
             .filter((fp) => {
-              const buyerPrefs = buyer.buyerProfile?.preferences || [];
-              return buyerPrefs.some(
-                (pref) => pref.category?.toLowerCase() === fp.category?.toLowerCase()
+              return buyerPreferredCrops.some(
+                (crop) => crop?.toLowerCase() === fp.category?.toLowerCase()
               );
             })
             .map((p) => ({
               productId: p._id,
-              productName: p.productName,
+              productName: p.name || p.productName,
               category: p.category,
-              quantity: p.quantity,
-              price: p.price,
+              quantity: p.availableQuantity || p.estimatedYield || 0,
+              price: p.pricePerUnit || p.price || 0,
             }));
 
           matches.push({
             farmer: farmer._id,
             farmerName: farmer.name,
             farmerEmail: farmer.email,
-            farmerCounty: farmer.farmProfile?.county,
-            farmSize: farmer.farmProfile?.landSize,
+            farmerCounty: farmer.farm?.location?.county,
+            farmSize: farmer.farm?.landSize,
             matchScore,
             factors,
             distance,

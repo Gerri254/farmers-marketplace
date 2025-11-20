@@ -66,6 +66,103 @@ class FarmerProfileController {
     }
 
     /**
+     * Update farm profile (simpler version for basic farm info)
+     * POST /api/v1/farmer/update-farm-profile
+     */
+    async updateFarmProfile(req, res) {
+        try {
+            const farmerId = req.user.id; // Get from authenticated user
+            const { county, location, gpsCoordinates, soilType, landSize } = req.body;
+
+            logger.info(`Updating farm profile for farmer: ${farmerId}`);
+
+            // Find the farmer
+            const farmer = await User.findOne({ _id: farmerId, role: "farmer" });
+            if (!farmer) {
+                logger.warn(`Farmer not found: ${farmerId}`);
+                return res.status(404).json({ message: "Farmer not found" });
+            }
+
+            // Initialize farm object if it doesn't exist
+            if (!farmer.farm) {
+                farmer.farm = {};
+            }
+
+            // Handle mixed type location field (can be string or object)
+            // IMPORTANT: Ensure location is always an object before setting properties
+            if (!farmer.farm.location) {
+                // Initialize location as an object if it doesn't exist
+                farmer.farm.location = {};
+            } else {
+                // Check if location is a string value (handles Mongoose wrapper objects)
+                const locationStr = JSON.stringify(farmer.farm.location);
+                const isStringValue = locationStr && locationStr.startsWith('"') && locationStr.endsWith('"');
+
+                if (typeof farmer.farm.location === 'string' || isStringValue) {
+                    // Convert string location to object structure
+                    const oldLocation = isStringValue ? JSON.parse(locationStr) : farmer.farm.location;
+                    farmer.farm.location = {
+                        type: oldLocation // Preserve the old string value
+                    };
+                    farmer.markModified('farm.location');
+                }
+            }
+
+            // Update farm information
+            if (county) {
+                // Ensure location is an object one more time before setting property
+                if (typeof farmer.farm.location !== 'object' || farmer.farm.location === null) {
+                    logger.warn('Location is not an object, converting...');
+                    const temp = String(farmer.farm.location || '');
+                    farmer.farm.location = temp ? { type: temp } : {};
+                }
+                farmer.farm.location.county = county;
+                farmer.markModified('farm.location');
+            }
+            if (location) {
+                farmer.farm.location.type = location; // Simple location string
+                farmer.markModified('farm.location');
+            }
+            if (gpsCoordinates) {
+                if (!farmer.farm.location.gpsCoordinates) {
+                    farmer.farm.location.gpsCoordinates = {};
+                }
+                if (gpsCoordinates.latitude !== undefined && gpsCoordinates.latitude !== null && gpsCoordinates.latitude !== '') {
+                    const lat = parseFloat(gpsCoordinates.latitude);
+                    if (!isNaN(lat)) {
+                        farmer.farm.location.gpsCoordinates.latitude = lat;
+                    }
+                }
+                if (gpsCoordinates.longitude !== undefined && gpsCoordinates.longitude !== null && gpsCoordinates.longitude !== '') {
+                    const lng = parseFloat(gpsCoordinates.longitude);
+                    if (!isNaN(lng)) {
+                        farmer.farm.location.gpsCoordinates.longitude = lng;
+                    }
+                }
+                farmer.markModified('farm.location.gpsCoordinates');
+            }
+            if (soilType) farmer.farm.soilType = soilType;
+            if (landSize !== undefined && landSize !== null && landSize !== '') {
+                const size = parseFloat(landSize);
+                if (!isNaN(size)) {
+                    farmer.farm.landSize = size;
+                }
+            }
+
+            await farmer.save();
+
+            logger.info(`Farm profile updated successfully for farmer: ${farmerId}`);
+            res.status(200).json({
+                message: "Farm profile updated successfully",
+                farm: farmer.farm
+            });
+        } catch (error) {
+            logger.error(`Error updating farm profile: ${error.message}`);
+            res.status(500).json({ message: error.message });
+        }
+    }
+
+    /**
      * Get farmer's complete farm profile
      * GET /api/v1/farmer/farm-details/:farmerId
      */
@@ -163,6 +260,7 @@ class FarmerProfileController {
                 buyerType,
                 businessName,
                 businessRegistration,
+                county,
                 preferences
             } = req.body;
 
@@ -183,6 +281,7 @@ class FarmerProfileController {
             if (buyerType) buyer.buyerProfile.buyerType = buyerType;
             if (businessName) buyer.buyerProfile.businessName = businessName;
             if (businessRegistration) buyer.buyerProfile.businessRegistration = businessRegistration;
+            if (county) buyer.buyerProfile.county = county;
 
             // Update preferences
             if (preferences) {

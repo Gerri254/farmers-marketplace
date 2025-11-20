@@ -17,7 +17,13 @@ const Orders = () => {
         setOrders(response.data.orders || []);
         setFilteredOrders(response.data.orders || []);
       } catch (err) {
-        setError("Failed to fetch orders.");
+        // Handle 404 as no orders (no orders exist yet)
+        if (err.response && err.response.status === 404) {
+          setOrders([]);
+          setFilteredOrders([]);
+        } else {
+          setError("Failed to fetch orders.");
+        }
       } finally {
         setLoading(false);
       }

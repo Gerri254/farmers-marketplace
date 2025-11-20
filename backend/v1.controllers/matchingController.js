@@ -36,8 +36,20 @@ exports.generateFarmerMatches = async (req, res) => {
 exports.generateBuyerMatches = async (req, res) => {
   try {
     const buyerId = req.user.id;
+    console.log(`[MATCHING] Generating matches for buyer: ${buyerId}`);
 
     const matches = await matchingService.findMatchesForBuyer(buyerId);
+    console.log(`[MATCHING] Found ${matches.length} matches`);
+
+    // If no matches found, return helpful message
+    if (matches.length === 0) {
+      return res.status(200).json({
+        success: true,
+        message: "No matches found. Make sure you have completed your buyer profile with preferences.",
+        count: 0,
+        matches: [],
+      });
+    }
 
     // Save top matches to database
     const savedMatches = [];
@@ -54,10 +66,12 @@ exports.generateBuyerMatches = async (req, res) => {
       matches,
     });
   } catch (error) {
+    console.error(`[MATCHING ERROR]`, error);
     res.status(500).json({
       success: false,
       message: "Error generating matches",
       error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 };
@@ -99,7 +113,7 @@ exports.getBuyerMatches = async (req, res) => {
       buyer: buyerId,
       expiresAt: { $gt: new Date() },
     })
-      .populate("farmer", "name email farmProfile")
+      .populate("farmer", "name email phone farm")
       .populate("matchedProducts.productId")
       .sort({ matchScore: -1 })
       .limit(20);
@@ -228,8 +242,8 @@ exports.getMatchDetails = async (req, res) => {
       _id: matchId,
       $or: [{ farmer: userId }, { buyer: userId }],
     })
-      .populate("farmer", "name email farmProfile")
-      .populate("buyer", "name email buyerProfile")
+      .populate("farmer", "name email phone farm")
+      .populate("buyer", "name email phone buyerProfile")
       .populate("matchedProducts.productId");
 
     if (!match) {
