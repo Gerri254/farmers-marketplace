@@ -193,7 +193,7 @@ const ProductDetails = () => {
                 <span className="font-semibold text-gray-700">
                   Location:
                 </span>{" "}
-                {(farmer.farm && farmer.farm.location) || "N/A"}
+                {(farmer.farm && farmer.farm.location && farmer.farm.location.county) || "N/A"}
               </p>
               <p className="mt-2 flex items-center gap-2">
                 <FaStar className="text-yellow-500" />

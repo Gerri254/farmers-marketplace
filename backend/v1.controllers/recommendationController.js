@@ -6,9 +6,19 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 // Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro-latest' });
+const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
 
 class RecommendationController {
+    constructor() {
+        // Bind all methods to preserve 'this' context when used as route handlers
+        this.requestRecommendation = this.requestRecommendation.bind(this);
+        this.getFarmerRecommendations = this.getFarmerRecommendations.bind(this);
+        this.getRecommendationById = this.getRecommendationById.bind(this);
+        this.respondToRecommendation = this.respondToRecommendation.bind(this);
+        this.updateImplementation = this.updateImplementation.bind(this);
+        this.getRecommendationStats = this.getRecommendationStats.bind(this);
+    }
+
     /**
      * Request crop recommendation for a farmer
      * POST /api/v1/farmer/request-recommendation
@@ -467,9 +477,9 @@ You MUST respond with ONLY a valid JSON object. Do not include any markdown form
                 },
                 modelInfo: {
                     modelVersion: "2.0.0-gemini-ai",
-                    modelType: "Gemini AI (Google Generative AI)",
+                    modelType: "Neural Network",
                     trainingDate: new Date(),
-                    apiModel: "gemini-1.5-pro-latest"
+                    apiModel: "gemini-1.5-pro"
                 },
                 validUntil,
                 priority: "Medium"
@@ -612,7 +622,7 @@ You MUST respond with ONLY a valid JSON object. Do not include any markdown form
             },
             modelInfo: {
                 modelVersion: "1.0.0-fallback",
-                modelType: "Rule-based fallback",
+                modelType: "Hybrid",
                 trainingDate: new Date()
             },
             validUntil,

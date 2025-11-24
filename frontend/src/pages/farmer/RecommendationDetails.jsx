@@ -89,7 +89,7 @@ const RecommendationDetails = () => {
             <Sprout className="text-green-600" size={32} />
             <div>
               <h1 className="text-3xl font-bold text-gray-800">
-                {recommendation.cropRecommendation}
+                {recommendation.recommendedCrop || recommendation.cropRecommendation}
               </h1>
               <p className="text-gray-600">
                 Recommended on {new Date(recommendation.createdAt).toLocaleDateString()}
@@ -98,10 +98,10 @@ const RecommendationDetails = () => {
           </div>
         </div>
 
-        <ConfidenceScore score={recommendation.confidenceScore} size="lg" />
+        <ConfidenceScore score={recommendation.confidence || recommendation.confidenceScore} size="lg" />
 
         {/* Action Buttons */}
-        {recommendation.status === "pending" && (
+        {recommendation.status?.toLowerCase() === "pending" && (
           <div className="flex gap-4 mt-6">
             <button
               onClick={() => handleResponse("accepted")}
@@ -131,35 +131,94 @@ const RecommendationDetails = () => {
             <h2 className="text-xl font-semibold text-gray-800 mb-4">
               Why This Crop?
             </h2>
-            <p className="text-gray-700 leading-relaxed">{recommendation.explanation}</p>
+            <p className="text-gray-700 leading-relaxed">
+              {recommendation.explanation?.summary || recommendation.explanation}
+            </p>
+
+            {/* Key Factors from Explanation */}
+            {recommendation.explanation?.keyFactors && recommendation.explanation.keyFactors.length > 0 && (
+              <div className="mt-6 space-y-4">
+                {recommendation.explanation.keyFactors.map((kf, index) => (
+                  <div key={index} className="border-l-4 border-green-500 pl-4">
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                        kf.impact === 'Positive' || kf.impact === 'Very Positive'
+                          ? 'bg-green-100 text-green-800'
+                          : kf.impact === 'Negative' || kf.impact === 'Very Negative'
+                          ? 'bg-red-100 text-red-800'
+                          : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {kf.impact}
+                      </span>
+                      <span className="font-semibold text-gray-800">{kf.factor}</span>
+                    </div>
+                    <p className="text-sm text-gray-600 mt-2">{kf.explanation}</p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Key Factors */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Key Factors</h2>
-            <div className="grid grid-cols-2 gap-4">
-              {recommendation.keyFactors?.map((factor, index) => (
-                <div
-                  key={index}
-                  className="bg-green-50 rounded-lg p-4 border border-green-200"
-                >
-                  <div className="font-semibold text-green-800">{factor.factor}</div>
-                  <div className="text-sm text-gray-600 mt-1">{factor.description}</div>
-                  <div className="mt-2">
-                    <div className="w-full bg-green-200 rounded-full h-2">
-                      <div
-                        className="bg-green-600 h-2 rounded-full"
-                        style={{ width: `${factor.score}%` }}
-                      ></div>
+          {/* Factors from Backend */}
+          {recommendation.factors && Object.keys(recommendation.factors).length > 0 && (
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">Contributing Factors</h2>
+              <div className="grid grid-cols-2 gap-4">
+                {Object.entries(recommendation.factors).map(([key, value], index) => (
+                  <div
+                    key={index}
+                    className="bg-green-50 rounded-lg p-4 border border-green-200"
+                  >
+                    <div className="font-semibold text-green-800">
+                      {key.replace(/([A-Z])/g, ' $1').trim()}
                     </div>
+                    <div className="text-sm text-gray-600 mt-1">{value.description}</div>
+                    {value.score && (
+                      <div className="mt-2">
+                        <div className="w-full bg-green-200 rounded-full h-2">
+                          <div
+                            className="bg-green-600 h-2 rounded-full"
+                            style={{ width: `${value.score}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* Legacy Key Factors */}
+          {recommendation.keyFactors && recommendation.keyFactors.length > 0 && (
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">Key Factors</h2>
+              <div className="grid grid-cols-2 gap-4">
+                {recommendation.keyFactors.map((factor, index) => (
+                  <div
+                    key={index}
+                    className="bg-green-50 rounded-lg p-4 border border-green-200"
+                  >
+                    <div className="font-semibold text-green-800">{factor.factor}</div>
+                    <div className="text-sm text-gray-600 mt-1">{factor.description}</div>
+                    {factor.score && (
+                      <div className="mt-2">
+                        <div className="w-full bg-green-200 rounded-full h-2">
+                          <div
+                            className="bg-green-600 h-2 rounded-full"
+                            style={{ width: `${factor.score}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Planting Guidance */}
-          {recommendation.plantingGuidance && (
+          {(recommendation.guidance || recommendation.plantingGuidance) && (
             <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-xl font-semibold text-gray-800 mb-4">
                 Planting Guidance
@@ -170,7 +229,8 @@ const RecommendationDetails = () => {
                   <div>
                     <div className="text-sm text-gray-600">Best Planting Time</div>
                     <div className="font-semibold text-gray-800">
-                      {recommendation.plantingGuidance.bestPlantingTime}
+                      {recommendation.guidance?.bestPlantingTime?.season ||
+                       recommendation.plantingGuidance?.bestPlantingTime || "N/A"}
                     </div>
                   </div>
                 </div>
@@ -179,18 +239,21 @@ const RecommendationDetails = () => {
                   <div>
                     <div className="text-sm text-gray-600">Expected Yield</div>
                     <div className="font-semibold text-gray-800">
-                      {recommendation.plantingGuidance.expectedYield}
+                      {recommendation.guidance?.expectedYield?.average ?
+                       `${recommendation.guidance.expectedYield.average} ${recommendation.guidance.expectedYield.unit || 'Kg/acre'}` :
+                       recommendation.plantingGuidance?.expectedYield || "N/A"}
                     </div>
                   </div>
                 </div>
-                {recommendation.plantingGuidance.potentialRevenue && (
+                {(recommendation.guidance?.potentialRevenue?.estimated || recommendation.plantingGuidance?.potentialRevenue) && (
                   <div className="flex items-center gap-3">
                     <DollarSign className="text-purple-600" size={24} />
                     <div>
                       <div className="text-sm text-gray-600">Potential Revenue</div>
                       <div className="font-semibold text-purple-600 text-xl">
                         KES{" "}
-                        {recommendation.plantingGuidance.potentialRevenue.toLocaleString()}
+                        {(recommendation.guidance?.potentialRevenue?.estimated ||
+                         recommendation.plantingGuidance?.potentialRevenue)?.toLocaleString()}
                       </div>
                     </div>
                   </div>
@@ -203,7 +266,7 @@ const RecommendationDetails = () => {
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Weather Widget */}
-          <WeatherWidget county={recommendation.farmProfile?.county} />
+          <WeatherWidget county={recommendation.farmLocation?.county || recommendation.farmProfile?.county} />
 
           {/* Farm Details */}
           <div className="bg-white rounded-lg shadow-md p-6">
@@ -211,16 +274,28 @@ const RecommendationDetails = () => {
             <div className="space-y-3">
               <div>
                 <div className="text-sm text-gray-600">County</div>
-                <div className="font-semibold">{recommendation.farmProfile?.county}</div>
+                <div className="font-semibold">
+                  {recommendation.farmLocation?.county || recommendation.farmProfile?.county}
+                </div>
               </div>
+              {(recommendation.farmLocation?.subCounty || recommendation.farmProfile?.subCounty) && (
+                <div>
+                  <div className="text-sm text-gray-600">Sub-County</div>
+                  <div className="font-semibold">
+                    {recommendation.farmLocation?.subCounty || recommendation.farmProfile?.subCounty}
+                  </div>
+                </div>
+              )}
               <div>
                 <div className="text-sm text-gray-600">Soil Type</div>
-                <div className="font-semibold">{recommendation.farmProfile?.soilType}</div>
+                <div className="font-semibold">
+                  {recommendation.inputData?.soilType || recommendation.farmProfile?.soilType || "N/A"}
+                </div>
               </div>
               <div>
                 <div className="text-sm text-gray-600">Land Size</div>
                 <div className="font-semibold">
-                  {recommendation.farmProfile?.landSize} acres
+                  {recommendation.inputData?.landSize || recommendation.farmProfile?.landSize || "N/A"} acres
                 </div>
               </div>
             </div>
@@ -231,9 +306,9 @@ const RecommendationDetails = () => {
             <h3 className="text-lg font-semibold text-gray-800 mb-4">Status</h3>
             <div
               className={`px-4 py-2 rounded-lg text-center font-semibold ${
-                recommendation.status === "accepted"
+                recommendation.status?.toLowerCase() === "accepted"
                   ? "bg-green-100 text-green-800"
-                  : recommendation.status === "rejected"
+                  : recommendation.status?.toLowerCase() === "rejected"
                   ? "bg-red-100 text-red-800"
                   : "bg-yellow-100 text-yellow-800"
               }`}

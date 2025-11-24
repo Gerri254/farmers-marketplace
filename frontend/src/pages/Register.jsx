@@ -14,20 +14,50 @@ const Register = () => {
     phone: "",
     role: "buyer",
     address: "",
-    farm: { location: "", farmName: "" },
+    farm: {
+      farmName: "",
+      location: {
+        county: "",
+      },
+    },
   });
 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  // Handle basic + nested fields
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (name === "farmName" || name === "location") {
-      setFormData({ ...formData, farm: { ...formData.farm, [name]: value } });
-    } else {
-      setFormData({ ...formData, [name]: value });
+
+    // Farm location county field
+    if (name === "location_county") {
+      setFormData({
+        ...formData,
+        farm: {
+          ...formData.farm,
+          location: {
+            county: value,
+          },
+        },
+      });
+      return;
     }
+
+    // Farm name
+    if (name === "farmName") {
+      setFormData({
+        ...formData,
+        farm: {
+          ...formData.farm,
+          farmName: value,
+        },
+      });
+      return;
+    }
+
+    // Regular fields
+    setFormData({ ...formData, [name]: value });
   };
 
   const handleSubmit = async (e) => {
@@ -46,7 +76,7 @@ const Register = () => {
       farm,
     } = formData;
 
-    // Validation
+    // Required fields validation
     if (
       !name ||
       !email ||
@@ -54,9 +84,11 @@ const Register = () => {
       !confirmPassword ||
       !phone ||
       (role === "buyer" && !address) ||
-      (role === "farmer" && (!farm.farmName || !farm.location))
+      (role === "farmer" &&
+        (!farm.farmName ||
+          !farm.location.county))
     ) {
-      setError("All fields are required");
+      setError("All fields are required.");
       setLoading(false);
       return;
     }
@@ -69,6 +101,7 @@ const Register = () => {
 
     try {
       let response;
+
       if (role === "farmer") {
         response = await farmerRegister({
           name,
@@ -89,14 +122,10 @@ const Register = () => {
         });
       }
 
-      console.log("User registered:", response.data);
-
       localStorage.setItem("token", response.data.token);
       navigate("/login");
     } catch (err) {
-      setError(
-        err.response?.data?.message || "Registration failed. Try again."
-      );
+      setError(err.response?.data?.message || "Registration failed.");
     } finally {
       setLoading(false);
     }
@@ -113,47 +142,20 @@ const Register = () => {
         <h2 className="text-3xl font-bold text-center text-gray-800 mb-6">
           Create Account
         </h2>
+
         {error && (
           <p className="text-red-500 text-sm text-center mb-3">{error}</p>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
-            type="text"
-            name="name"
-            placeholder="Full Name"
-            value={formData.name}
-            onChange={handleChange}
-          />
-          <Input
-            type="email"
-            name="email"
-            placeholder="Email"
-            value={formData.email}
-            onChange={handleChange}
-          />
-          <Input
-            type="tel"
-            name="phone"
-            placeholder="Phone Number"
-            value={formData.phone}
-            onChange={handleChange}
-          />
-          <Input
-            type="password"
-            name="password"
-            placeholder="Password"
-            value={formData.password}
-            onChange={handleChange}
-          />
-          <Input
-            type="password"
-            name="confirmPassword"
-            placeholder="Confirm Password"
-            value={formData.confirmPassword}
-            onChange={handleChange}
-          />
+          {/* BASIC FIELDS */}
+          <Input name="name" placeholder="Full Name" value={formData.name} onChange={handleChange} />
+          <Input name="email" type="email" placeholder="Email" value={formData.email} onChange={handleChange} />
+          <Input name="phone" type="tel" placeholder="Phone Number" value={formData.phone} onChange={handleChange} />
+          <Input name="password" type="password" placeholder="Password" value={formData.password} onChange={handleChange} />
+          <Input name="confirmPassword" type="password" placeholder="Confirm Password" value={formData.confirmPassword} onChange={handleChange} />
 
+          {/* ROLE */}
           <select
             name="role"
             value={formData.role}
@@ -164,9 +166,9 @@ const Register = () => {
             <option value="farmer">Farmer</option>
           </select>
 
+          {/* BUYER FIELDS */}
           {formData.role === "buyer" && (
             <Input
-              type="text"
               name="address"
               placeholder="Address"
               value={formData.address}
@@ -174,30 +176,44 @@ const Register = () => {
             />
           )}
 
+          {/* FARMER FIELDS */}
           {formData.role === "farmer" && (
-            <React.Fragment>
+            <>
               <Input
-                type="text"
                 name="farmName"
                 placeholder="Farm Name"
                 value={formData.farm.farmName}
                 onChange={handleChange}
               />
-              <Input
-                type="text"
-                name="location"
-                placeholder="Farm Location"
-                value={formData.farm.location}
+
+              <select
+                name="location_county"
+                value={formData.farm.location.county}
                 onChange={handleChange}
-              />
-            </React.Fragment>
+                className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500"
+              >
+                <option value="">Select County</option>
+                <option value="Trans-Nzoia">Trans-Nzoia</option>
+                <option value="Kirinyaga">Kirinyaga</option>
+                <option value="Makueni">Makueni</option>
+                <option value="Nairobi">Nairobi</option>
+                <option value="Mombasa">Mombasa</option>
+                <option value="Kisumu">Kisumu</option>
+                <option value="Nakuru">Nakuru</option>
+                <option value="Uasin Gishu">Uasin Gishu</option>
+                <option value="Kiambu">Kiambu</option>
+                <option value="Meru">Meru</option>
+                <option value="Machakos">Machakos</option>
+                <option value="Bungoma">Bungoma</option>
+                <option value="Kakamega">Kakamega</option>
+                <option value="Other">Other</option>
+              </select>
+            </>
           )}
 
           <Button
             type="submit"
-            className={`w-full ${
-              loading ? "bg-gray-400 cursor-not-allowed" : ""
-            }`}
+            className={`w-full ${loading ? "bg-gray-400 cursor-not-allowed" : ""}`}
             disabled={loading}
           >
             {loading ? "Signing Up..." : "Sign Up"}
@@ -206,10 +222,7 @@ const Register = () => {
 
         <p className="text-sm mt-4 text-center">
           Already have an account?{" "}
-          <a
-            href="/login"
-            className="text-green-700 font-semibold hover:underline"
-          >
+          <a href="/login" className="text-green-700 font-semibold hover:underline">
             Login
           </a>
         </p>

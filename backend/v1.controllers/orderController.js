@@ -49,12 +49,20 @@ class OrderController {
                 logger.info(`Stock updated for product ${product._id}. Remaining stock: ${product.stock}`);
 
                 // Create order
-                const order = new Order({
+                const orderData = {
                     buyerId,
                     product: item,
                     totalAmount: product.price * item.quantity,
                     status: "Pending"
-                });
+                };
+
+                // Add matchId if product came from a match
+                if (item.matchId) {
+                    orderData.matchId = item.matchId;
+                    logger.info(`Order linked to match ${item.matchId}`);
+                }
+
+                const order = new Order(orderData);
 
                 await order.save();
                 logger.info(`Order placed for product ${item._id}, buyer: ${buyerId}`);

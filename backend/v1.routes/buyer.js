@@ -34,6 +34,7 @@ router.post('/add-demand-forecast', verifyToken, requireRole(["buyer"]), farmerP
 // ==========================================
 router.get('/viewdetails/:productId', verifyToken, requireRole(["buyer"]), productController.getProduct);
 router.get('/getproducts', verifyToken, requireRole(["buyer"]), productController.getAllProducts);
+router.get('/farmer/:farmerId/products', verifyToken, requireRole(["buyer"]), productController.getFarmerProductsForBuyer);
 
 // ==========================================
 // CART ROUTES

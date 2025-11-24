@@ -18,12 +18,17 @@ const MyProducts = () => {
       try {
         const response = await getFarmerProducts();
         if (!response.data || !Array.isArray(response.data.products)) {
-          throw new Error("Unexpected API response structure");
+          // Set empty array if structure is unexpected but don't show error
+          setProducts([]);
+        } else {
+          setProducts(response.data.products);
         }
-        setProducts(response.data.products);
       } catch (err) {
         console.error("Error fetching products:", err);
-        toast.error("Failed to load products. Please try again.");
+        // Only show error if it's not a 404 or empty products response
+        if (err.response?.status !== 404 && err.response?.data?.message !== "No products found") {
+          toast.error("Failed to load products. Please try again.");
+        }
         setProducts([]);
       } finally {
         setLoading(false);

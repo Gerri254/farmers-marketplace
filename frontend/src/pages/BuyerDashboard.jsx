@@ -7,6 +7,7 @@ import ProductDetails from "./ProductDetails";
 import Checkout from "./buyer/Checkout";
 import Payment from "./buyer/Payment";
 import MatchedFarmers from "./buyer/MatchedFarmers";
+import FarmerProducts from "./buyer/FarmerProducts";
 import { Home, ShoppingCart, List, User, Heart, Users } from "lucide-react";
 import "./buyer/buyer.css";
 import { motion } from "framer-motion";
@@ -62,6 +63,7 @@ const BuyerDashboard = () => {
           <Route path="cart" element={<Cart />} />
           <Route path="orders" element={<Orders />} />
           <Route path="matched-farmers" element={<MatchedFarmers />} />
+          <Route path="farmer/:farmerId/products" element={<FarmerProducts />} />
           <Route path="profile" element={<Profile />} />
           <Route path="product/:id" element={<ProductDetails />} />
           <Route path="checkout" element={<Checkout />} />

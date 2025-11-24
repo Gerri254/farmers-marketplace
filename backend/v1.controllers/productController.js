@@ -280,6 +280,40 @@ class ProductController {
             res.status(500).json({ message: error.message });
         }
     }
+
+    async getFarmerProductsForBuyer(req, res) {
+        try {
+            const { farmerId } = req.params;
+            logger.info(`Buyer fetching products for farmerId: ${farmerId}`);
+
+            // Fetch all approved products for the given farmerId
+            const products = await Product.find({
+                farmerId,
+                approved: true
+            }).sort({ createdAt: -1 });
+
+            if (products.length === 0) {
+                logger.warn(`No approved products found for farmerId: ${farmerId}`);
+                return res.status(404).json({ message: "No products found for this farmer" });
+            }
+
+            // Fetch farmer information
+            const User = require('../models/user');
+            const farmer = await User.findById(farmerId).select('name email farmProfile');
+
+            logger.info(`Retrieved ${products.length} approved products for farmerId: ${farmerId}`);
+
+            return res.json({
+                message: "Products retrieval successful",
+                products,
+                farmer
+            });
+
+        } catch (error) {
+            logger.error(`Error fetching products for farmerId ${req.params.farmerId}: ${error.message}`);
+            return res.status(500).json({ message: error.message });
+        }
+    }
 }
 
 module.exports = new ProductController();

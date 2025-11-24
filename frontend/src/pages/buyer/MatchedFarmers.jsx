@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
-import { RefreshCw, Users, MapPin, DollarSign, Package, Maximize } from "lucide-react";
-import { generateBuyerMatches, getBuyerMatches, respondToMatch } from "../../api";
+import { RefreshCw, Users, MapPin, DollarSign, Package, Maximize, ShoppingCart, Eye } from "lucide-react";
+import { generateBuyerMatches, getBuyerMatches, respondToMatch, pushToCart } from "../../api";
+import { useNavigate } from "react-router-dom";
+import Cookies from "js-cookie";
 
 const MatchedFarmers = () => {
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchMatches();
@@ -53,6 +56,28 @@ const MatchedFarmers = () => {
       fetchMatches();
     } catch (error) {
       toast.error("Failed to respond to match");
+      console.error(error);
+    }
+  };
+
+  const handleViewProducts = (farmerId) => {
+    navigate(`/buyer-dashboard/farmer/${farmerId}/products`);
+  };
+
+  const handleAddToCart = async (product, matchId) => {
+    try {
+      const buyerId = Cookies.get("id");
+      await pushToCart({
+        buyerId,
+        product: {
+          ...product,
+          quantity: 1,
+          matchId // Track which match this product came from
+        }
+      });
+      toast.success(`${product.productName || product.category} added to cart!`);
+    } catch (error) {
+      toast.error("Failed to add to cart");
       console.error(error);
     }
   };
@@ -167,19 +192,37 @@ const MatchedFarmers = () => {
               {match.matchedProducts && match.matchedProducts.length > 0 && (
                 <div className="mb-4">
                   <div className="text-sm text-gray-600 mb-2">Available Products:</div>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="space-y-2">
                     {match.matchedProducts.slice(0, 3).map((product, idx) => (
-                      <span
-                        key={idx}
-                        className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded"
-                      >
-                        {product.category}
-                      </span>
+                      <div key={idx} className="flex items-center justify-between bg-green-50 p-2 rounded">
+                        <div className="flex-1">
+                          <span className="text-sm font-medium text-gray-800">
+                            {product.productName || product.category}
+                          </span>
+                          {product.quantity && (
+                            <span className="text-xs text-gray-600 ml-2">
+                              ({product.quantity} {product.unit || 'units'})
+                            </span>
+                          )}
+                          {product.price && (
+                            <span className="text-xs text-green-600 ml-2 font-semibold">
+                              KES {product.price}
+                            </span>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => handleAddToCart(product, match._id)}
+                          className="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-1 rounded flex items-center gap-1 transition duration-200"
+                        >
+                          <ShoppingCart size={14} />
+                          Add
+                        </button>
+                      </div>
                     ))}
                     {match.matchedProducts.length > 3 && (
-                      <span className="text-xs text-gray-500">
-                        +{match.matchedProducts.length - 3} more
-                      </span>
+                      <div className="text-xs text-gray-500 text-center">
+                        +{match.matchedProducts.length - 3} more products
+                      </div>
                     )}
                   </div>
                 </div>
@@ -208,32 +251,44 @@ const MatchedFarmers = () => {
               </div>
 
               {/* Action Buttons */}
-              {match.buyerResponse === "pending" ? (
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleRespond(match._id, "accepted")}
-                    className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
-                  >
-                    Accept
-                  </button>
-                  <button
-                    onClick={() => handleRespond(match._id, "rejected")}
-                    className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
-                  >
-                    Reject
-                  </button>
-                </div>
-              ) : (
-                <div
-                  className={`text-center py-2 rounded-lg font-semibold ${
-                    match.buyerResponse === "accepted"
-                      ? "bg-green-100 text-green-800"
-                      : "bg-red-100 text-red-800"
-                  }`}
+              <div className="space-y-2">
+                {/* View All Products Button */}
+                <button
+                  onClick={() => handleViewProducts(match.farmer?._id)}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 flex items-center justify-center gap-2"
                 >
-                  {match.buyerResponse?.toUpperCase()}
-                </div>
-              )}
+                  <Eye size={18} />
+                  View All Products from this Farmer
+                </button>
+
+                {/* Accept/Reject Buttons */}
+                {match.buyerResponse === "pending" ? (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleRespond(match._id, "accepted")}
+                      className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
+                    >
+                      Accept Match
+                    </button>
+                    <button
+                      onClick={() => handleRespond(match._id, "rejected")}
+                      className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
+                    >
+                      Reject Match
+                    </button>
+                  </div>
+                ) : (
+                  <div
+                    className={`text-center py-2 rounded-lg font-semibold ${
+                      match.buyerResponse === "accepted"
+                        ? "bg-green-100 text-green-800"
+                        : "bg-red-100 text-red-800"
+                    }`}
+                  >
+                    Match {match.buyerResponse?.toUpperCase()}
+                  </div>
+                )}
+              </div>
             </div>
           ))}
         </div>

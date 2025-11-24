@@ -25,12 +25,12 @@ const RecommendationCard = ({ recommendation }) => {
         <div className="flex items-center gap-2">
           <Sprout className="text-green-600" size={24} />
           <h3 className="text-xl font-bold text-gray-800">
-            {recommendation.cropRecommendation}
+            {recommendation.recommendedCrop || recommendation.cropRecommendation}
           </h3>
         </div>
         <span
           className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadge(
-            recommendation.status
+            recommendation.status?.toLowerCase()
           )}`}
         >
           {recommendation.status?.toUpperCase()}
@@ -38,7 +38,7 @@ const RecommendationCard = ({ recommendation }) => {
       </div>
 
       <div className="mb-4">
-        <ConfidenceScore score={recommendation.confidenceScore} size="md" />
+        <ConfidenceScore score={recommendation.confidence || recommendation.confidenceScore} size="md" />
       </div>
 
       <div className="grid grid-cols-2 gap-4 mb-4">
@@ -47,7 +47,8 @@ const RecommendationCard = ({ recommendation }) => {
           <div>
             <div className="text-xs text-gray-600">Best Planting Time</div>
             <div className="text-sm font-semibold text-gray-800">
-              {recommendation.plantingGuidance?.bestPlantingTime || "N/A"}
+              {recommendation.guidance?.bestPlantingTime?.season ||
+               recommendation.plantingGuidance?.bestPlantingTime || "N/A"}
             </div>
           </div>
         </div>
@@ -57,19 +58,22 @@ const RecommendationCard = ({ recommendation }) => {
           <div>
             <div className="text-xs text-gray-600">Expected Yield</div>
             <div className="text-sm font-semibold text-gray-800">
-              {recommendation.plantingGuidance?.expectedYield || "N/A"}
+              {recommendation.guidance?.expectedYield?.average ?
+               `${recommendation.guidance.expectedYield.average} ${recommendation.guidance.expectedYield.unit || 'Kg/acre'}` :
+               recommendation.plantingGuidance?.expectedYield || "N/A"}
             </div>
           </div>
         </div>
       </div>
 
-      {recommendation.plantingGuidance?.potentialRevenue && (
+      {(recommendation.guidance?.potentialRevenue?.estimated || recommendation.plantingGuidance?.potentialRevenue) && (
         <div className="bg-green-50 rounded-lg p-3 flex items-center gap-2">
           <DollarSign className="text-green-600" size={20} />
           <div>
             <div className="text-xs text-gray-600">Potential Revenue</div>
             <div className="text-lg font-bold text-green-600">
-              KES {recommendation.plantingGuidance.potentialRevenue.toLocaleString()}
+              KES {(recommendation.guidance?.potentialRevenue?.estimated ||
+                   recommendation.plantingGuidance?.potentialRevenue)?.toLocaleString()}
             </div>
           </div>
         </div>

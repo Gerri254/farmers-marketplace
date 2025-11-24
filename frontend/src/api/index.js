@@ -216,3 +216,8 @@ export const getMatchDetails = (matchId) => {
 export const getMatchStats = () => {
   return API.get("/api/v1/matching/stats");
 };
+
+// Get products by farmer ID (for buyers)
+export const getFarmerProductsByBuyer = (farmerId) => {
+  return API.get(`/api/v1/buyer/farmer/${farmerId}/products`);
+};
